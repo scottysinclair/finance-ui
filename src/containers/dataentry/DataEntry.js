@@ -26,6 +26,44 @@ export const DataEntry = () => {
 }
 
 const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor}) => {
+    const [dateRefs, setDateRefs] = useState([]);
+    const [descriptionRefs, setDescriptionRefs] = useState([]);
+    const [categoryRefs, setCategoryRefs] = useState([]);
+    const [amountRefs, setAmountRefs] = useState([]);
+    const prev = usePrevious({changeCategoryFor});
+
+
+    useEffect(() => {
+        setDateRefs( createRefs1d(dateRefs, transactions.length));
+        setDescriptionRefs( createRefs1d(dateRefs, transactions.length));
+        setCategoryRefs( createRefs1d(dateRefs, transactions.length));
+        setAmountRefs( createRefs1d(dateRefs, transactions.length));
+    }, [transactions.length]);
+
+    useEffect(() => {
+        if (!changeCategoryFor && prev && prev.changeCategoryFor) {
+            focusRef1d(categoryRefs, withId(prev.changeCategoryFor))
+        }
+    }, [changeCategoryFor])
+
+    const withId = id => transactions.findIndex(e => e.id === id)
+
+    const onKeyDown = (refArray, i) => {
+        return e => {
+            if (e.key === "ArrowUp") focusRef1d(refArray, i-1)
+            if (e.key === "ArrowDown") focusRef1d(refArray, i+1)
+            return true
+        }
+    }
+
+    const CategoryCell = ({t, i}) => {
+        if (changeCategoryFor === t.id)
+            return t.category;
+        else return <button ref={categoryRefs[i]}
+                            onKeyDown={onKeyDown(categoryRefs, i)}
+                            onClick={() => setChangeCategoryFor(t.id) }>{t.category}</button>
+    }
+
     return <table className={className}>
     <thead>
     <tr>
@@ -36,11 +74,11 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     </tr>
     </thead>
     <tbody>
-    { transactions.map(t => (<tr key={t.id}>
-        <td key='date'><input type='text' value={t.date}/></td>
-        <td key='description'><input type='text' value={t.description}/></td>
-        <td key='category'>{changeCategoryFor === t.id ? t.category : <button onClick={() => setChangeCategoryFor(t.id) }>{t.category}</button>}</td>
-        <td key='amount'><input type='text' value={t.amount}/></td>
+    { transactions.map((t,i) => (<tr key={t.id}>
+        <td key='date'><input ref={dateRefs[i]} onKeyDown={onKeyDown(dateRefs, i)} type='text' value={t.date}/></td>
+        <td key='description'><input ref={descriptionRefs[i]} onKeyDown={onKeyDown(descriptionRefs, i)} type='text' value={t.description}/></td>
+        <td key='category'><CategoryCell {...{t, i}}/></td>
+        <td key='amount'><input ref={amountRefs[i]} onKeyDown={onKeyDown(amountRefs, i)} type='text' value={t.amount}/></td>
     </tr>)) }
     </tbody>
 </table>})`
@@ -51,21 +89,38 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 `;
 
 
+function usePrevious(value) {
+    const ref = useRef();
+    useEffect(() => {
+        ref.current = value;
+    });
+    return ref.current;
+}
+
+const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
+const createRefs2d = (existingArray, n, m) => Array(n).fill(null).map((_, i) => existingArray[i] || createRefs1d([], m))
+const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 
 const Categories = ({categories, changeCategoryFor, categoryChanged}) => {
-    const [selectCatRefs, setSelectCatRefs] = React.useState([]);
+    const [selectCatRefs, setSelectCatRefs] = useState([]);
 
     useEffect(() => {
-        // rebuild refs when the categories change
-        setSelectCatRefs(r => (
-            Array(categories.length).fill().map((_, i) => selectCatRefs[i] || createRef())
-        ));
+        setSelectCatRefs(createRefs1d(selectCatRefs, categories.length));
     }, [categories.length]);
 
     useEffect(() => {
         //focus on the first category when changing the category for a transaction
         if (changeCategoryFor && selectCatRefs[0].current) selectCatRefs[0].current.focus()
     }, [changeCategoryFor])
+
+    const SelectButton = ({i, name}) => <button
+        ref={selectCatRefs[i]}
+        onKeyDown={e => {
+            if (e.key === "ArrowUp") focusRef1d(selectCatRefs, i-1)
+            if (e.key === "ArrowDown") focusRef1d(selectCatRefs, i+1)
+            return true
+        }}
+        onClick={() => categoryChanged(name)}>{name}</button>
 
     return <table>
     <thead>
@@ -76,11 +131,12 @@ const Categories = ({categories, changeCategoryFor, categoryChanged}) => {
     </thead>
     <tbody>
     {  categories.map((c, i) => (<tr key={c.id}>
-        <td key='name'>{changeCategoryFor ? <button ref={selectCatRefs[i]} onClick={() =>categoryChanged(c.name)}>{c.name}</button> : c.name }</td>
+        <td key='name'>{changeCategoryFor ? <SelectButton i={i} name={c.name}/> : c.name }</td>
         <td key='total'>{c.total}</td>
     </tr>)) }
     </tbody>
 </table>}
+
 
 const categories = [
     { id: 1, name: "Food", total: 100},
