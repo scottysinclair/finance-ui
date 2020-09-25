@@ -1,4 +1,4 @@
-import React, {useState} from 'react';
+import React, {createRef, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
 
 const DataEntrySection = styled.section`
@@ -12,7 +12,6 @@ const ContentDiv = styled.div`
 export const DataEntry = () => {
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
     const categoryChanged = cat => {
-        console.log(transactions)
         transactions.filter(t => t.id === changeCategoryFor).forEach(t => t.category = cat)
         setChangeCategoryFor(null)
     }
@@ -26,8 +25,8 @@ export const DataEntry = () => {
         </DataEntrySection>)
 }
 
-const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor}) =>
-<table className={className}>
+const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor}) => {
+    return <table className={className}>
     <thead>
     <tr>
         <th key='day-header'>Day</th>
@@ -44,7 +43,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         <td key='amount'><input type='text' value={t.amount}/></td>
     </tr>)) }
     </tbody>
-</table>)`
+</table>})`
    input {
        font-weight: bold;
        color: red;
@@ -53,8 +52,22 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
 
 
-const Categories = ({categories, changeCategoryFor, categoryChanged}) =>
-<table focus>
+const Categories = ({categories, changeCategoryFor, categoryChanged}) => {
+    const [selectCatRefs, setSelectCatRefs] = React.useState([]);
+
+    useEffect(() => {
+        // rebuild refs when the categories change
+        setSelectCatRefs(r => (
+            Array(categories.length).fill().map((_, i) => selectCatRefs[i] || createRef())
+        ));
+    }, [categories.length]);
+
+    useEffect(() => {
+        //focus on the first category when changing the category for a transaction
+        if (changeCategoryFor && selectCatRefs[0].current) selectCatRefs[0].current.focus()
+    }, [changeCategoryFor])
+
+    return <table>
     <thead>
     <tr>
         <th key='name-header'>Name</th>
@@ -62,12 +75,12 @@ const Categories = ({categories, changeCategoryFor, categoryChanged}) =>
     </tr>
     </thead>
     <tbody>
-    { categories.map(c => (<tr key={c.id}>
-        <td key='name'>{changeCategoryFor ? <button onClick={() =>categoryChanged(c.name)}>{c.name}</button> : c.name }</td>
+    {  categories.map((c, i) => (<tr key={c.id}>
+        <td key='name'>{changeCategoryFor ? <button ref={selectCatRefs[i]} onClick={() =>categoryChanged(c.name)}>{c.name}</button> : c.name }</td>
         <td key='total'>{c.total}</td>
     </tr>)) }
     </tbody>
-</table>
+</table>}
 
 const categories = [
     { id: 1, name: "Food", total: 100},
