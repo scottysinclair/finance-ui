@@ -1,16 +1,21 @@
 import React from 'react';
+import styled from 'styled-components'
+
+const DataEntrySection = styled.section`
+  color: palevioletred;
+`;
 
 export const DataEntry = () => {
     return (
-        <section>DATA ENTRY
+        <DataEntrySection>DATA ENTRY
             <header>January 2020</header>
-            <Table data={transactions}/>
+            <Transactions data={transactions}/>
             <Categories data={categories}/>
-        </section>)
+        </DataEntrySection>)
 }
 
-const Table = props =>
-<table>
+const Transactions = styled(({className, data}) =>
+<table className={className}>
     <thead>
     <tr>
         <th>Day</th>
@@ -20,14 +25,21 @@ const Table = props =>
     </tr>
     </thead>
     <tbody>
-    { props.data.map(t => (<tr>
+    { data.map(t => (<tr>
         <td><input type='text' value={t.date}/></td>
         <td><input type='text' value={t.description}/></td>
         <td><button>{t.category.name}</button></td>
         <td><input type='text' value={t.amount}/></td>
     </tr>)) }
     </tbody>
-</table>
+</table>)`
+   input {
+       font-weight: bold;
+       color: red;
+   }
+`;
+
+
 
 const Categories = props =>
 <table>
