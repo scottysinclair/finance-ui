@@ -2,7 +2,7 @@ import React, {createRef, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
 
 const DataEntrySection = styled.section`
-  color: palevioletred;
+  #color: palevioletred;
 `;
 
 const ContentDiv = styled.div`
@@ -76,14 +76,14 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     </thead>
     <tbody>
     { transactions.map((t,i) => (<tr key={t.id}>
-        <td key='date'><input ref={dateRefs[i]} onKeyDown={onKeyDown(dateRefs, i)} type='text' value={t.date}/></td>
+        <td key='date'><input ref={dateRefs[i]} onKeyDown={onKeyDown(dateRefs, i)} type='text' defaultValue={t.date}/></td>
         <td key='description'>
             <input ref={descriptionRefs[i]}
                    onKeyDown={onKeyDown(descriptionRefs, i)}
                    type='text'
                    defaultValue={t.description}/></td>
         <td key='category'><CategoryCell {...{t, i}}/></td>
-        <td key='amount'><input ref={amountRefs[i]} onKeyDown={onKeyDown(amountRefs, i)} type='text' value={t.amount}/></td>
+        <td key='amount'><input ref={amountRefs[i]} onKeyDown={onKeyDown(amountRefs, i)} type='text' defaultValue={t.amount}/></td>
     </tr>)) }
     </tbody>
 </table>})`
@@ -93,12 +93,13 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
       padding: 0.25rem;
       text-align: left;
       border: 1px solid #ccc;
+      color: palevioletred;
     }
     
    input {
        border: none;
        font-weight: bold;
-       color: red;
+       color: palevioletred;
    }
    input:focus {
        outline: none;
@@ -108,6 +109,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     border: none;
     width: 100%;
     height: 100%;
+    color: palevioletred;
     background-color: transparent;
    }   
    button:focus {
@@ -160,7 +162,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     </tr>
     </thead>
     <tbody>
-    {  categories.map((c, i) => (<tr key={c.id}>
+    {  categories.map((c, i) => (<tr key={c.id} style={{ backgroundColor: c.color}}>
         <td key='name'>{changeCategoryFor ? <SelectButton i={i} name={c.name}/> : c.name }</td>
         <td key='total'>{c.total}</td>
     </tr>)) }
@@ -186,9 +188,9 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
 
 
 const categories = [
-    { id: 1, name: "Food", total: 100},
-    { id: 2, name: "School", total: 200},
-    { id: 3, name: "Car", total: 300}
+    { id: 1, name: "Food", total: 100, color: '#CCFFCC'},
+    { id: 2, name: "School", total: 200, color: '#FFFFCC'},
+    { id: 3, name: "Car", total: 300, color: '#CCCCFF'}
 ]
 
 const transactions = [
