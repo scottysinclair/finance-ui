@@ -1,6 +1,7 @@
 import React, {createRef, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid';
+import FocusTrap from "focus-trap-react";
 
 
 const DataEntrySection = styled.section`  
@@ -57,7 +58,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     useEffect(() => {
         if (!changeCategoryFor && prev && prev.changeCategoryFor) {
-            focusRef1d(categoryRefs, withId(prev.changeCategoryFor))
+            focusRef1d(categoryRefs, withUuid(prev.changeCategoryFor))
         }
     }, [changeCategoryFor])
 
@@ -69,7 +70,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
             prev && prev.activeCell && prev.activeCell.ref && prev.activeCell.ref.current && prev.activeCell.ref.current.focus()
     }, [activeCell])
 
-    const withId = id => transactions.findIndex(e => e.id === id)
+    const withUuid = id => transactions.findIndex(t => t.uuid === id)
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
@@ -109,8 +110,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                                          disabled={changeCategoryFor != null}
                                          type='text'
                                          value={value}
-                                        onChange={e => updateTransaction(t, field, e.target.value)}
-                                         />
+                                        onChange={e => updateTransaction(t, field, e.target.value)}/>
 
     return <table className={className}>
     <thead>
@@ -124,7 +124,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     <tbody>
     { transactions.map((t,i) => (<tr key={t.uuid}>
         <td key='date'>
-            {inputCell(t, 'date', dateRefs, i, t.date, {leftRefs: descriptionRefs}) }
+            {inputCell(t, 'date', dateRefs, i, t.date, {rightRefs: descriptionRefs}) }
         </td>
         <td key='description'>
             {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: categoryRefs}) }
@@ -156,16 +156,20 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
       border: none;
    }
   
-   
    button {
     border: none;
     width: 100%;
     height: 100%;
     padding: 0.25rem;
     background-color: transparent;
+   }
+   button:disabled {
+    background-color: #fafafa;
    }   
+   
    button.changeCategoryFor {
-    background-color: #DCDCDD;
+      background-color: white;
+      border: 1px solid black;
    }
 `;
 
@@ -192,6 +196,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
 
     useEffect(() => {
         //focus on the first category when changing the category for a transaction
+
         if (changeCategoryFor && selectCatRefs[0].current) selectCatRefs[indexOf(getTransaction(changeCategoryFor).category)].current.focus()
     }, [changeCategoryFor])
 
@@ -210,20 +215,22 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
         return <button ref={selectCatRefs[i]} {...props} >{name}</button>
     }
 
-    return <table className={className}>
-    <thead>
-    <tr>
-        <th key='name-header'>Name</th>
-        <th key='total-header'>Total</th>
-    </tr>
-    </thead>
-    <tbody>
-    {  categories.map((c, i) => (<tr key={c.id}>
-        <td key='name'><SelectButton i={i} name={c.name}/></td>
-        <td key='total'><span>{c.total}</span></td>
-    </tr>)) }
-    </tbody>
-</table>})`
+    return <FocusTrap active={changeCategoryFor}>
+        <table className={className}>
+        <thead>
+            <tr>
+                <th key='name-header'>Name</th>
+                <th key='total-header'>Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {  categories.map((c, i) => (<tr key={c.id}>
+                <td key='name'><SelectButton i={i} name={c.name}/></td>
+                <td key='total'><span>{c.total}</span></td>
+            </tr>)) }
+        </tbody>
+    </table>
+</FocusTrap>})`
    margin-left: 5rem;
    border-collapse: collapse;
    th, td {
