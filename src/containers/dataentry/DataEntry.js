@@ -1,5 +1,7 @@
 import React, {createRef, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
+import { v4 as uuidv4 } from 'uuid';
+
 
 const DataEntrySection = styled.section`  
 `;
@@ -11,21 +13,30 @@ const ContentDiv = styled.div`
 export const DataEntry = ({onChangeHeaderInfo}) => {
     onChangeHeaderInfo("January 2020")
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
+    const [transactions, setTransactions] = useState(loadedTransactions)
+
     const categoryChanged = cat => {
-        transactions.filter(t => t.id === changeCategoryFor).forEach(t => t.category = cat)
+        transactions.filter(t => t.uuid === changeCategoryFor).forEach(t => t.category = cat)
         setChangeCategoryFor(null)
     }
-    const getTransaction = id => transactions.find(t => t.id === id)
+    const getTransaction = uuid => transactions.find(t => t.uuid === uuid)
+    const updateTransaction = (t, field,value) => {
+        console.log("update T ", t, field, value)
+        const newT = {...t}
+        newT[field] = value
+        console.log(newT)
+        setTransactions(transactions.map(x => x.uuid === newT.uuid ? newT : x))
+    }
     return (
         <DataEntrySection>
             <ContentDiv>
-                <Transactions {...{transactions, changeCategoryFor, setChangeCategoryFor, }}/>
+                <Transactions {...{transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction}}/>
             </ContentDiv>
         </DataEntrySection>)
 }
 
-const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor}) => {
+const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}) => {
     const [dateRefs, setDateRefs] = useState([]);
     const [descriptionRefs, setDescriptionRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
@@ -33,6 +44,9 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     const [activeCell, setActiveCell] = useState(null);
     const prev = usePrevious({changeCategoryFor, activeCell});
 
+    useEffect(() => {
+        console.log("TRANS MOUNT")
+    }, [])
 
     useEffect(() => {
         setDateRefs( createRefs1d(dateRefs, transactions.length));
@@ -48,6 +62,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     }, [changeCategoryFor])
 
     useEffect(() => {
+        console.log("active cell changed", activeCell)
         if (activeCell)
             activeCell.ref && activeCell.ref.current && activeCell.ref.current.focus()
         else
@@ -59,13 +74,12 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
             if (!isActive(t, field)) {
-                e.preventDefault()
                 if (e.key === "ArrowUp") focusRef1d(refArray, i-1)
                 if (e.key === "ArrowDown") focusRef1d(refArray, i+1)
                 if (e.key === "ArrowLeft") focusRef1d(leftRefArray, i)
                 if (e.key === "ArrowRight") focusRef1d(rightRefArray, i)
             }
-            if (e.key === "Enter") {
+            if (e.key === "Enter" && field !== 'category') {
                 console.log(t, field)
                 if (!isActive(t, field)) setActiveCell({t, field, ref: refArray[i]})
                 else setActiveCell(null)
@@ -73,21 +87,30 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         }
     }
 
-    const isActive = (t, field) => activeCell && activeCell.t === t && activeCell.field === field
+    const isActive = (t, field) => {
+        if (t.id === 3 && field === 'description') {
+            if (activeCell) console.log("ISACTIVE ", activeCell.t, activeCell.field, activeCell && activeCell.t === t && activeCell.field === field)
+        }
+        return activeCell && activeCell.t.uuid === t.uuid && activeCell.field === field
+    }
 
-    const CategoryCell = ({t, i}) => {
+    const categoryCell = (t, i) => {
         return <button ref={categoryRefs[i]}
-                    className={changeCategoryFor === t.id ? 'changeCategoryFor' : null}
+                    className={changeCategoryFor === t.uuid ? 'changeCategoryFor' : null}
                     onKeyDown={onKeyDown(t, 'category', categoryRefs, i, descriptionRefs, amountRefs)}
-                    onClick={() => setChangeCategoryFor(t.id) }>{t.category}</button>
+                    disabled={changeCategoryFor != null}
+                    onClick={() => setChangeCategoryFor(t.uuid) }>{t.category}</button>
     }
 
 
-    const InputCell = ({t, field, myRefs, i, value, rightRefs, leftRefs}) => <input ref={myRefs[i]}
+    const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}) => <input key={`${t.uuid}-${field}`} ref={myRefs[i]}
                                          onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
                                          readOnly={!isActive(t, field)}
+                                         disabled={changeCategoryFor != null}
                                          type='text'
-                                         defaultValue={value}/>
+                                         value={value}
+                                        onChange={e => updateTransaction(t, field, e.target.value)}
+                                         />
 
     return <table className={className}>
     <thead>
@@ -99,16 +122,20 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     </tr>
     </thead>
     <tbody>
-    { transactions.map((t,i) => (<tr key={t.id}>
+    { transactions.map((t,i) => (<tr key={t.uuid}>
         <td key='date'>
-            <InputCell {...{field: 'date', t, i, value: t.date, myRefs: dateRefs, rightRefs: descriptionRefs}}/>
+            {inputCell(t, 'date', dateRefs, i, t.date, {leftRefs: descriptionRefs}) }
         </td>
         <td key='description'>
-            <InputCell {...{field: 'description', t, i, value: t.description, myRefs: descriptionRefs, leftRefs: dateRefs, rightRefs: categoryRefs}}/></td>
+            {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: categoryRefs}) }
+        </td>
         <td key='category'>
-            <CategoryCell {...{t, i}}/></td>
+            {categoryCell(t, i)}
+        </td>
         <td key='amount'>
-            <InputCell {...{field: 'amount', t, i, value: t.amount, myRefs: amountRefs, leftRefs: categoryRefs}}/></td>
+            {inputCell(t, 'amount', amountRefs, i, t.amount, {leftRefs: categoryRefs}) }
+        </td>
+
     </tr>)) }
     </tbody>
 </table>})`
@@ -157,7 +184,6 @@ const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].curre
 
 const Categories = styled(({className, categories, changeCategoryFor, categoryChanged, getTransaction}) => {
     const [selectCatRefs, setSelectCatRefs] = useState([]);
-
     const indexOf = categoryName => categories.findIndex(c => c.name === categoryName)
 
     useEffect(() => {
@@ -244,9 +270,10 @@ const categories = [
     { id: 3, name: "Car", total: 300 }
 ]
 
-const transactions = [
+let loadedTransactions = [
     {
         id: 1,
+        uuid: uuidv4(),
         date: " 01",
         description: "Lidl",
         category: "Food",
@@ -254,6 +281,7 @@ const transactions = [
     },
     {
         id: 2,
+        uuid: uuidv4(),
         date: "02",
         description: "Spar",
         category: "Food",
@@ -261,6 +289,7 @@ const transactions = [
     },
     {
         id: 3,
+        uuid: uuidv4(),
         date: "03",
         description: "Lidl",
         category: "Food",
@@ -268,6 +297,7 @@ const transactions = [
     },
     {
         id: 4,
+        uuid: uuidv4(),
         date: "03",
         description: "Penny",
         category: "Food",
@@ -275,6 +305,7 @@ const transactions = [
     },
     {
         id: 5,
+        uuid: uuidv4(),
         date: "04",
         description: "Lidl",
         category: "Food",
