@@ -31,6 +31,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     const [categoryRefs, setCategoryRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
     const prev = usePrevious({changeCategoryFor});
+    const [render, setRender] = useState(0);
 
 
     useEffect(() => {
@@ -57,12 +58,12 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     }
 
     const CategoryCell = ({t, i}) => {
-        if (changeCategoryFor === t.id)
-            return t.category;
-        else return <button ref={categoryRefs[i]}
-                            onKeyDown={onKeyDown(categoryRefs, i)}
-                            onClick={() => setChangeCategoryFor(t.id) }>{t.category}</button>
+        return <button ref={categoryRefs[i]}
+                    className={changeCategoryFor === t.id && 'changeCategoryFor'}
+                    onKeyDown={onKeyDown(categoryRefs, i)}
+                    onClick={() => setChangeCategoryFor(t.id) }>{t.category}</button>
     }
+
 
     return <table className={className}>
     <thead>
@@ -76,15 +77,44 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     <tbody>
     { transactions.map((t,i) => (<tr key={t.id}>
         <td key='date'><input ref={dateRefs[i]} onKeyDown={onKeyDown(dateRefs, i)} type='text' value={t.date}/></td>
-        <td key='description'><input ref={descriptionRefs[i]} onKeyDown={onKeyDown(descriptionRefs, i)} type='text' value={t.description}/></td>
+        <td key='description'>
+            <input ref={descriptionRefs[i]}
+                   onKeyDown={onKeyDown(descriptionRefs, i)}
+                   type='text'
+                   defaultValue={t.description}/></td>
         <td key='category'><CategoryCell {...{t, i}}/></td>
         <td key='amount'><input ref={amountRefs[i]} onKeyDown={onKeyDown(amountRefs, i)} type='text' value={t.amount}/></td>
     </tr>)) }
     </tbody>
 </table>})`
+   border-collapse: collapse;
+   th, td {
+      position: relative;
+      padding: 0.25rem;
+      text-align: left;
+      border: 1px solid #ccc;
+    }
+    
    input {
+       border: none;
        font-weight: bold;
        color: red;
+   }
+   input:focus {
+       outline: none;
+   }
+   
+   button {
+    border: none;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+   }   
+   button:focus {
+    background-color: light-grey;
+   }
+   button.changeCategoryFor {
+    background-color: blue;
    }
 `;
 
@@ -101,7 +131,7 @@ const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => exi
 const createRefs2d = (existingArray, n, m) => Array(n).fill(null).map((_, i) => existingArray[i] || createRefs1d([], m))
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 
-const Categories = ({categories, changeCategoryFor, categoryChanged}) => {
+const Categories = styled(({className, categories, changeCategoryFor, categoryChanged}) => {
     const [selectCatRefs, setSelectCatRefs] = useState([]);
 
     useEffect(() => {
@@ -122,7 +152,7 @@ const Categories = ({categories, changeCategoryFor, categoryChanged}) => {
         }}
         onClick={() => categoryChanged(name)}>{name}</button>
 
-    return <table>
+    return <table className={className}>
     <thead>
     <tr>
         <th key='name-header'>Name</th>
@@ -135,7 +165,24 @@ const Categories = ({categories, changeCategoryFor, categoryChanged}) => {
         <td key='total'>{c.total}</td>
     </tr>)) }
     </tbody>
-</table>}
+</table>})`
+   border-collapse: collapse;
+   th, td {
+      position: relative;
+      padding: 0.25rem;
+      text-align: left;
+      border: 1px solid #ccc;
+    }
+   button {
+    border: none;
+    width: 100%;
+    height: 100%;
+    background-color: transparent;
+   }   
+   button:focus {
+    background-color: light-grey;
+   }
+`;
 
 
 const categories = [
