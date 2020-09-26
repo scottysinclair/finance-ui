@@ -5,6 +5,7 @@ import {DataEntry} from "./containers/dataentry/DataEntry";
 import styled from 'styled-components'
 
 const StyledHeader = styled.header`
+    display: flex;
     ol {
         display: flex;
         margin: 0;
@@ -24,6 +25,10 @@ const StyledHeader = styled.header`
           background-color: #DCDCDD;
         }
      }
+   h1 {
+     margin: 0;
+     margin-left: 5rem;
+   }  
      border-bottom: solid black 1px;
 `;
 
@@ -44,9 +49,7 @@ function App() {
                 <li><NavLink activeClassName='navActive' to="/report/monthly">Monthly Report</NavLink></li>
                 <li><NavLink activeClassName='navActive' to="/report/yearly">Yearly Report</NavLink></li>
             </ol>
-            <aside>
-
-            </aside>
+            <h1>{headerInfo}</h1>
       </StyledHeader>
       <StyledMain>
           <Switch>

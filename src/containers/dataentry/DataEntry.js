@@ -30,8 +30,8 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     const [descriptionRefs, setDescriptionRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
-    const prev = usePrevious({changeCategoryFor});
-    const [render, setRender] = useState(0);
+    const [activeCell, setActiveCell] = useState(null);
+    const prev = usePrevious({changeCategoryFor, activeCell});
 
 
     useEffect(() => {
@@ -47,23 +47,47 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         }
     }, [changeCategoryFor])
 
+    useEffect(() => {
+        if (activeCell)
+            activeCell.ref && activeCell.ref.current && activeCell.ref.current.focus()
+        else
+            prev && prev.activeCell && prev.activeCell.ref && prev.activeCell.ref.current && prev.activeCell.ref.current.focus()
+    }, [activeCell])
+
     const withId = id => transactions.findIndex(e => e.id === id)
 
-    const onKeyDown = (refArray, i) => {
+    const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
-            if (e.key === "ArrowUp") focusRef1d(refArray, i-1)
-            if (e.key === "ArrowDown") focusRef1d(refArray, i+1)
-            return true
+            if (!isActive(t, field)) {
+                e.preventDefault()
+                if (e.key === "ArrowUp") focusRef1d(refArray, i-1)
+                if (e.key === "ArrowDown") focusRef1d(refArray, i+1)
+                if (e.key === "ArrowLeft") focusRef1d(leftRefArray, i)
+                if (e.key === "ArrowRight") focusRef1d(rightRefArray, i)
+            }
+            if (e.key === "Enter") {
+                console.log(t, field)
+                if (!isActive(t, field)) setActiveCell({t, field, ref: refArray[i]})
+                else setActiveCell(null)
+            }
         }
     }
+
+    const isActive = (t, field) => activeCell && activeCell.t === t && activeCell.field === field
 
     const CategoryCell = ({t, i}) => {
         return <button ref={categoryRefs[i]}
                     className={changeCategoryFor === t.id ? 'changeCategoryFor' : null}
-                    onKeyDown={onKeyDown(categoryRefs, i)}
+                    onKeyDown={onKeyDown(t, 'category', categoryRefs, i, descriptionRefs, amountRefs)}
                     onClick={() => setChangeCategoryFor(t.id) }>{t.category}</button>
     }
 
+
+    const InputCell = ({t, field, myRefs, i, value, rightRefs, leftRefs}) => <input ref={myRefs[i]}
+                                         onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
+                                         readOnly={!isActive(t, field)}
+                                         type='text'
+                                         defaultValue={value}/>
 
     return <table className={className}>
     <thead>
@@ -76,14 +100,15 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     </thead>
     <tbody>
     { transactions.map((t,i) => (<tr key={t.id}>
-        <td key='date'><input ref={dateRefs[i]} onKeyDown={onKeyDown(dateRefs, i)} type='text' defaultValue={t.date}/></td>
+        <td key='date'>
+            <InputCell {...{field: 'date', t, i, value: t.date, myRefs: dateRefs, rightRefs: descriptionRefs}}/>
+        </td>
         <td key='description'>
-            <input ref={descriptionRefs[i]}
-                   onKeyDown={onKeyDown(descriptionRefs, i)}
-                   type='text'
-                   defaultValue={t.description}/></td>
-        <td key='category'><CategoryCell {...{t, i}}/></td>
-        <td key='amount'><input ref={amountRefs[i]} onKeyDown={onKeyDown(amountRefs, i)} type='text' defaultValue={t.amount}/></td>
+            <InputCell {...{field: 'description', t, i, value: t.description, myRefs: descriptionRefs, leftRefs: dateRefs, rightRefs: categoryRefs}}/></td>
+        <td key='category'>
+            <CategoryCell {...{t, i}}/></td>
+        <td key='amount'>
+            <InputCell {...{field: 'amount', t, i, value: t.amount, myRefs: amountRefs, leftRefs: categoryRefs}}/></td>
     </tr>)) }
     </tbody>
 </table>})`
@@ -103,6 +128,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
       padding: 0.25rem;
       border: none;
    }
+  
    
    button {
     border: none;
