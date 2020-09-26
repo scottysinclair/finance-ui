@@ -1,24 +1,57 @@
-import React from 'react';
-import {BrowserRouter as Router, Link, Redirect, Route, Switch} from 'react-router-dom';
+import React, {useState} from 'react';
+import {BrowserRouter as Router, NavLink, Route, Switch, Redirect} from 'react-router-dom';
 import './App.css';
 import {DataEntry} from "./containers/dataentry/DataEntry";
+import styled from 'styled-components'
+
+const StyledHeader = styled.header`
+    ol {
+        display: flex;
+        margin: 0;
+        list-style-type: none;
+        li {
+          padding-right: 1rem;
+        }
+        a {
+          text-align: center;
+          display: block;
+          color: black;
+          height: 3rem;
+          line-height: 3rem;
+          text-decoration: none;
+        }
+        .navActive {
+          background-color: #DCDCDD;
+        }
+     }
+     border-bottom: solid black 1px;
+`;
+
+const StyledMain = styled.main`
+  padding-top: 2rem;
+  padding-left: 4rem;
+`;
 
 function App() {
+    const [headerInfo, setHeaderInfo] = useState("")
+
   return (
     <div className="App">
     <Router>
-      <header className="App-header">
-            Finance Application V0.1
+      <StyledHeader className="App-header">
             <ol>
-                <li><Link to="/">Enter Data</Link></li>
-                <li><Link to="/report/monthly">Monthly Report</Link></li>
-                <li><Link to="/report/yearly">Yearly Report</Link></li>
+                <li><NavLink activeClassName='navActive' to="/enterdata">Enter Data</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/report/monthly">Monthly Report</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/report/yearly">Yearly Report</NavLink></li>
             </ol>
-      </header>
-      <main>
+            <aside>
+
+            </aside>
+      </StyledHeader>
+      <StyledMain>
           <Switch>
-            <Route exact={true} key="route-1" path='/'>
-              <DataEntry/>
+            <Route exact={true} key="route-1" path='/enterdata'>
+              <DataEntry onChangeHeaderInfo={(text) => setHeaderInfo(text)}/>
             </Route>
               <Route exact={true} key="route-2" path='/report/monthly'>
                   <div>TODO: Monthly</div>
@@ -26,8 +59,11 @@ function App() {
               <Route exact={true} key="route-2" path='/report/yearly'>
                   <div>TODO: Yearly</div>
               </Route>
+              <Route>
+                  <Redirect to='enterdata'/>
+              </Route>
           </Switch>
-      </main>
+      </StyledMain>
     </Router>
     </div>
   );

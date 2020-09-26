@@ -1,26 +1,26 @@
 import React, {createRef, useEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
 
-const DataEntrySection = styled.section`
-  #color: palevioletred;
+const DataEntrySection = styled.section`  
 `;
 
 const ContentDiv = styled.div`
     display: flex;
 `;
 
-export const DataEntry = () => {
+export const DataEntry = ({onChangeHeaderInfo}) => {
+    onChangeHeaderInfo("January 2020")
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
     const categoryChanged = cat => {
         transactions.filter(t => t.id === changeCategoryFor).forEach(t => t.category = cat)
         setChangeCategoryFor(null)
     }
+    const getTransaction = id => transactions.find(t => t.id === id)
     return (
-        <DataEntrySection>DATA ENTRY
-            <header>January 2020</header>
+        <DataEntrySection>
             <ContentDiv>
                 <Transactions {...{transactions, changeCategoryFor, setChangeCategoryFor, }}/>
-                <Categories {...{categories,  changeCategoryFor, categoryChanged}}/>
+                <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction}}/>
             </ContentDiv>
         </DataEntrySection>)
 }
@@ -59,7 +59,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     const CategoryCell = ({t, i}) => {
         return <button ref={categoryRefs[i]}
-                    className={changeCategoryFor === t.id && 'changeCategoryFor'}
+                    className={changeCategoryFor === t.id ? 'changeCategoryFor' : null}
                     onKeyDown={onKeyDown(categoryRefs, i)}
                     onClick={() => setChangeCategoryFor(t.id) }>{t.category}</button>
     }
@@ -90,33 +90,29 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
    border-collapse: collapse;
    th, td {
       position: relative;
-      padding: 0.25rem;
       text-align: left;
       border: 1px solid #ccc;
-      color: palevioletred;
+      font-weight: normal;
+    }
+    th {
+      padding-top: 0.3rem;
+      padding-bottom: 0.3rem;
     }
     
    input {
-       border: none;
-       font-weight: bold;
-       color: palevioletred;
-   }
-   input:focus {
-       outline: none;
+      padding: 0.25rem;
+      border: none;
    }
    
    button {
     border: none;
     width: 100%;
     height: 100%;
-    color: palevioletred;
+    padding: 0.25rem;
     background-color: transparent;
    }   
-   button:focus {
-    background-color: light-grey;
-   }
    button.changeCategoryFor {
-    background-color: blue;
+    background-color: #DCDCDD;
    }
 `;
 
@@ -133,8 +129,10 @@ const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => exi
 const createRefs2d = (existingArray, n, m) => Array(n).fill(null).map((_, i) => existingArray[i] || createRefs1d([], m))
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 
-const Categories = styled(({className, categories, changeCategoryFor, categoryChanged}) => {
+const Categories = styled(({className, categories, changeCategoryFor, categoryChanged, getTransaction}) => {
     const [selectCatRefs, setSelectCatRefs] = useState([]);
+
+    const indexOf = categoryName => categories.findIndex(c => c.name === categoryName)
 
     useEffect(() => {
         setSelectCatRefs(createRefs1d(selectCatRefs, categories.length));
@@ -142,17 +140,23 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
 
     useEffect(() => {
         //focus on the first category when changing the category for a transaction
-        if (changeCategoryFor && selectCatRefs[0].current) selectCatRefs[0].current.focus()
+        if (changeCategoryFor && selectCatRefs[0].current) selectCatRefs[indexOf(getTransaction(changeCategoryFor).category)].current.focus()
     }, [changeCategoryFor])
 
-    const SelectButton = ({i, name}) => <button
-        ref={selectCatRefs[i]}
-        onKeyDown={e => {
-            if (e.key === "ArrowUp") focusRef1d(selectCatRefs, i-1)
-            if (e.key === "ArrowDown") focusRef1d(selectCatRefs, i+1)
-            return true
-        }}
-        onClick={() => categoryChanged(name)}>{name}</button>
+    const SelectButton = ({i, name}) => {
+        const props = changeCategoryFor ? {
+            onKeyDown: e => {
+                if (e.key === "ArrowUp") focusRef1d(selectCatRefs, i-1)
+                if (e.key === "ArrowDown") focusRef1d(selectCatRefs, i+1)
+                return true
+            },
+            className: "selectMode",
+            onClick: () => categoryChanged(name)
+        } : {
+            disabled: true
+        }
+        return <button ref={selectCatRefs[i]} {...props} >{name}</button>
+    }
 
     return <table className={className}>
     <thead>
@@ -162,35 +166,56 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     </tr>
     </thead>
     <tbody>
-    {  categories.map((c, i) => (<tr key={c.id} style={{ backgroundColor: c.color}}>
-        <td key='name'>{changeCategoryFor ? <SelectButton i={i} name={c.name}/> : c.name }</td>
-        <td key='total'>{c.total}</td>
+    {  categories.map((c, i) => (<tr key={c.id}>
+        <td key='name'><SelectButton i={i} name={c.name}/></td>
+        <td key='total'><span>{c.total}</span></td>
     </tr>)) }
     </tbody>
 </table>})`
+   margin-left: 5rem;
    border-collapse: collapse;
    th, td {
       position: relative;
-      padding: 0.25rem;
       text-align: left;
+      font-weight: normal;
       border: 1px solid #ccc;
     }
+   th {
+    padding-top: 0.3rem;
+    padding-bottom: 0.3rem;
+    padding-left: 1rem;
+    padding-right: 1rem;
+   } 
+   span {
+    padding: 0.25rem;    
+    padding-left: 1rem;
+    padding-right: 1rem;
+   } 
    button {
     border: none;
     width: 100%;
     height: 100%;
+    padding: 0.25rem;    
+    padding-left: 1rem;
+    padding-right: 1rem;
     background-color: transparent;
    }   
    button:focus {
     background-color: light-grey;
    }
+   button:disabled {
+    color: black;
+   }
+   selectMode:focus {
+     outline: none
+   }
 `;
 
 
 const categories = [
-    { id: 1, name: "Food", total: 100, color: '#CCFFCC'},
-    { id: 2, name: "School", total: 200, color: '#FFFFCC'},
-    { id: 3, name: "Car", total: 300, color: '#CCCCFF'}
+    { id: 1, name: "Food", total: 100 },
+    { id: 2, name: "School", total: 200 },
+    { id: 3, name: "Car", total: 300 }
 ]
 
 const transactions = [
