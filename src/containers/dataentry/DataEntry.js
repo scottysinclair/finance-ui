@@ -11,6 +11,8 @@ const ContentDiv = styled.div`
     display: flex;
 `;
 
+const classes = array => array.filter(i => i != null).reduce((a, b) => a + ' ' + b)
+
 export const DataEntry = ({onChangeHeaderInfo}) => {
     onChangeHeaderInfo("January 2020")
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
@@ -63,7 +65,6 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     }, [changeCategoryFor])
 
     useEffect(() => {
-        console.log("active cell changed", activeCell)
         if (activeCell)
             activeCell.ref && activeCell.ref.current && activeCell.ref.current.focus()
         else
@@ -97,7 +98,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     const categoryCell = (t, i) => {
         return <button ref={categoryRefs[i]}
-                    className={changeCategoryFor === t.uuid ? 'changeCategoryFor' : null}
+                    className={classes(['category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null])}
                     onKeyDown={onKeyDown(t, 'category', categoryRefs, i, descriptionRefs, amountRefs)}
                     disabled={changeCategoryFor != null}
                     onClick={() => setChangeCategoryFor(t.uuid) }>{t.category}</button>
@@ -105,12 +106,13 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
 
     const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}) => <input key={`${t.uuid}-${field}`} ref={myRefs[i]}
+                                         className={field}
                                          onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
                                          readOnly={!isActive(t, field)}
                                          disabled={changeCategoryFor != null}
                                          type='text'
                                          value={value}
-                                        onChange={e => updateTransaction(t, field, e.target.value)}/>
+                                         onChange={e => updateTransaction(t, field, e.target.value)}/>
 
     return <table className={className}>
     <thead>
@@ -139,9 +141,8 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     </tr>)) }
     </tbody>
 </table>})`
-   border-collapse: collapse;
+   #border-collapse: collapse;
    th, td {
-      position: relative;
       text-align: left;
       border: 1px solid #ccc;
       font-weight: normal;
@@ -150,12 +151,27 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
       padding-top: 0.3rem;
       padding-bottom: 0.3rem;
     }
-    
+        
    input {
+      display: inline-block;
+      height: 1.2rem;
       padding: 0.25rem;
       border: none;
    }
+   input:focus {
+       outline: 2px solid black;
+   }
+   input.date {
+     width: 3rem;
+   }
+   input.description {
+     width: 30rem;
+   }
+   button.category {
+     width: 10rem;
+   }
   
+      
    button {
     border: none;
     width: 100%;
@@ -169,7 +185,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
    
    button.changeCategoryFor {
       background-color: white;
-      border: 1px solid black;
+      outline: 2px solid #888888;
    }
 `;
 
@@ -232,7 +248,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     </table>
 </FocusTrap>})`
    margin-left: 5rem;
-   border-collapse: collapse;
+   #border-collapse: collapse;
    th, td {
       position: relative;
       text-align: left;
@@ -251,9 +267,10 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     padding-right: 1rem;
    } 
    button {
+    display: inline-block;
     border: none;
+    height: 1.7rem;    
     width: 100%;
-    height: 100%;
     padding: 0.25rem;    
     padding-left: 1rem;
     padding-right: 1rem;
