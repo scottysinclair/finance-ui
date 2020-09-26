@@ -106,7 +106,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
 
     const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}) => <input key={`${t.uuid}-${field}`} ref={myRefs[i]}
-                                         className={field}
+                                         className={classes([field, isActive(t, field) ? 'active' : null])}
                                          onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
                                          readOnly={!isActive(t, field)}
                                          disabled={changeCategoryFor != null}
@@ -161,17 +161,15 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
    input:focus {
        outline: 2px solid black;
    }
+   input.active {
+       outline: 2px solid blue;
+   }
    input.date {
      width: 3rem;
    }
    input.description {
      width: 30rem;
    }
-   button.category {
-     width: 10rem;
-   }
-  
-      
    button {
     border: none;
     width: 100%;
@@ -179,13 +177,16 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     padding: 0.25rem;
     background-color: transparent;
    }
+   button.category {
+     width: 10rem;
+   }
    button:disabled {
     background-color: #fafafa;
    }   
    
    button.changeCategoryFor {
       background-color: white;
-      outline: 2px solid #888888;
+      outline: 2px solid blue;
    }
 `;
 
@@ -248,7 +249,6 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     </table>
 </FocusTrap>})`
    margin-left: 5rem;
-   #border-collapse: collapse;
    th, td {
       position: relative;
       text-align: left;
