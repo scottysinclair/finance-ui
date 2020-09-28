@@ -17,6 +17,11 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
     onChangeHeaderInfo("January 2020")
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
     const [transactions, setTransactions] = useState(loadedTransactions)
+    useEffect(() => {
+        fetch('http://localhost:8080/transactions', {credentials: 'same-origin'})
+        .then(response => response.json())
+        .then(json => json.transactions.forEach((t) => console.log(t)))
+    }, [])
 
     const categoryChanged = cat => {
         transactions.filter(t => t.uuid === changeCategoryFor).forEach(t => t.category = cat)
@@ -42,6 +47,7 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
 const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}) => {
     const [dateRefs, setDateRefs] = useState([]);
     const [descriptionRefs, setDescriptionRefs] = useState([]);
+    const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
     const [activeCell, setActiveCell] = useState(null);
@@ -54,6 +60,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     useEffect(() => {
         setDateRefs( createRefs1d(dateRefs, transactions.length));
         setDescriptionRefs( createRefs1d(dateRefs, transactions.length));
+        setCommentRefs( createRefs1d(commentRefs, transactions.length));
         setCategoryRefs( createRefs1d(dateRefs, transactions.length));
         setAmountRefs( createRefs1d(dateRefs, transactions.length));
     }, [transactions.length]);
@@ -105,20 +112,22 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     }
 
 
-    const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}) => <input key={`${t.uuid}-${field}`} ref={myRefs[i]}
+    const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}, other) => <input key={`${t.uuid}-${field}`} ref={myRefs[i]}
                                          className={classes([field, isActive(t, field) ? 'active' : null])}
                                          onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
                                          readOnly={!isActive(t, field)}
                                          disabled={changeCategoryFor != null}
                                          type='text'
                                          value={value}
-                                         onChange={e => updateTransaction(t, field, e.target.value)}/>
+                                         onChange={e => updateTransaction(t, field, e.target.value)}
+                                        {...other  }/>
 
     return <table className={className}>
     <thead>
     <tr>
         <th key='day-header'>Day</th>
         <th key='description-header'>Description</th>
+        <th key='comment-header'>Comment</th>
         <th key='category-header'>Category</th>
         <th key='amount-header'>Amount</th>
     </tr>
@@ -126,10 +135,13 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     <tbody>
     { transactions.map((t,i) => (<tr key={t.uuid}>
         <td key='date'>
-            {inputCell(t, 'date', dateRefs, i, t.date, {rightRefs: descriptionRefs}) }
+            {inputCell(t, 'date', dateRefs, i, t.date, {rightRefs: descriptionRefs}, {maxLength: 2}) }
         </td>
         <td key='description'>
-            {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: categoryRefs}) }
+            {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: commentRefs}) }
+        </td>
+        <td key='comment'>
+            {inputCell(t, 'comment', commentRefs, i, t.comment, {leftRefs: descriptionRefs, rightRefs: categoryRefs}) }
         </td>
         <td key='category'>
             {categoryCell(t, i)}
@@ -154,7 +166,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         
    input {
       display: inline-block;
-      height: 1.2rem;
+      height: 1.4rem;
       padding: 0.25rem;
       border: none;
    }
@@ -169,6 +181,12 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
    }
    input.description {
      width: 30rem;
+   }
+   input.comment {
+     width: 10rem;
+   }
+   input.amount {
+     width: 4rem;
    }
    button {
     border: none;
@@ -300,6 +318,7 @@ let loadedTransactions = [
         uuid: uuidv4(),
         date: " 01",
         description: "Lidl",
+        comment: "",
         category: "Food",
         amount: 113.0,
     },
@@ -308,6 +327,7 @@ let loadedTransactions = [
         uuid: uuidv4(),
         date: "02",
         description: "Spar",
+        comment: "",
         category: "Food",
         amount: 21.0,
     },
@@ -316,6 +336,7 @@ let loadedTransactions = [
         uuid: uuidv4(),
         date: "03",
         description: "Lidl",
+        comment: "",
         category: "Food",
         amount: 11.0,
     },
@@ -324,6 +345,7 @@ let loadedTransactions = [
         uuid: uuidv4(),
         date: "03",
         description: "Penny",
+        comment: "",
         category: "Food",
         amount: 123.0,
     },
@@ -332,6 +354,7 @@ let loadedTransactions = [
         uuid: uuidv4(),
         date: "04",
         description: "Lidl",
+        comment: "",
         category: "Food",
         amount: 13.0
     }
