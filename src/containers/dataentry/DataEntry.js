@@ -16,15 +16,30 @@ const classes = array => array.filter(i => i != null).reduce((a, b) => a + ' ' +
 export const DataEntry = ({onChangeHeaderInfo}) => {
     onChangeHeaderInfo("January 2020")
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
-    const [transactions, setTransactions] = useState(loadedTransactions)
+    const [categories, setCategories] = useState([])
+    const [transactions, setTransactions] = useState([])
     useEffect(() => {
-        fetch('http://localhost:8080/transactions', {credentials: 'same-origin'})
-        .then(response => response.json())
-        .then(json => json.transactions.forEach((t) => console.log(t)))
-    }, [])
+        fetch('http://localhost:8080/categories')
+            .then(response => response.json())
+            .then(json => setCategories(json.categories))
+            .then(_ => fetch('http://localhost:8080/transactions/2019/1'))
+            .then(response => response.json())
+            .then(json => json.transactions.map(t =>
+            { return {
+                id: t.id,
+                uuid: uuidv4(),
+                date: t.date.substring(8,10),
+                comment: t.comment,
+                category: t.category,
+                amount: t.amount
+            }}))
+            .then(transactions => setTransactions(transactions))}, [])
 
     const categoryChanged = cat => {
         transactions.filter(t => t.uuid === changeCategoryFor).forEach(t => t.category = cat)
+        setChangeCategoryFor(null)
+    }
+    const quitCategoryMode = _ => {
         setChangeCategoryFor(null)
     }
     const getTransaction = uuid => transactions.find(t => t.uuid === uuid)
@@ -39,14 +54,13 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
         <DataEntrySection>
             <ContentDiv>
                 <Transactions {...{transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
-                <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction}}/>
+                <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
             </ContentDiv>
         </DataEntrySection>)
 }
 
 const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}) => {
     const [dateRefs, setDateRefs] = useState([]);
-    const [descriptionRefs, setDescriptionRefs] = useState([]);
     const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
@@ -59,7 +73,6 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     useEffect(() => {
         setDateRefs( createRefs1d(dateRefs, transactions.length));
-        setDescriptionRefs( createRefs1d(dateRefs, transactions.length));
         setCommentRefs( createRefs1d(commentRefs, transactions.length));
         setCategoryRefs( createRefs1d(dateRefs, transactions.length));
         setAmountRefs( createRefs1d(dateRefs, transactions.length));
@@ -105,65 +118,63 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     const categoryCell = (t, i) => {
         return <button ref={categoryRefs[i]}
-                    className={classes(['category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null])}
-                    onKeyDown={onKeyDown(t, 'category', categoryRefs, i, descriptionRefs, amountRefs)}
-                    disabled={changeCategoryFor != null}
-                    onClick={() => setChangeCategoryFor(t.uuid) }>{t.category}</button>
+                       className={classes(['category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null])}
+                       onKeyDown={onKeyDown(t, 'category', categoryRefs, i, dateRefs, amountRefs)}
+                       disabled={changeCategoryFor != null}
+                       onClick={() => setChangeCategoryFor(t.uuid) }>{t.category}</button>
     }
 
 
     const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}, other) => <input key={`${t.uuid}-${field}`} ref={myRefs[i]}
-                                         className={classes([field, isActive(t, field) ? 'active' : null])}
-                                         onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
-                                         readOnly={!isActive(t, field)}
-                                         disabled={changeCategoryFor != null}
-                                         type='text'
-                                         value={value}
-                                         onChange={e => updateTransaction(t, field, e.target.value)}
-                                        {...other  }/>
+                                                                                           className={classes([field, isActive(t, field) ? 'active' : null])}
+                                                                                           onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
+                                                                                           readOnly={!isActive(t, field)}
+                                                                                           disabled={changeCategoryFor != null}
+                                                                                           type='text'
+                                                                                           value={value}
+                                                                                           onChange={e => updateTransaction(t, field, e.target.value)}
+                                                                                           {...other  }/>
 
     return <table className={className}>
-    <thead>
-    <tr>
-        <th key='day-header'>Day</th>
-        <th key='description-header'>Description</th>
-        <th key='comment-header'>Comment</th>
-        <th key='category-header'>Category</th>
-        <th key='amount-header'>Amount</th>
-    </tr>
-    </thead>
-    <tbody>
-    { transactions.map((t,i) => (<tr key={t.uuid}>
-        <td key='date'>
-            {inputCell(t, 'date', dateRefs, i, t.date, {rightRefs: descriptionRefs}, {maxLength: 2}) }
-        </td>
-        <td key='description'>
-            {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: commentRefs}) }
-        </td>
-        <td key='comment'>
-            {inputCell(t, 'comment', commentRefs, i, t.comment, {leftRefs: descriptionRefs, rightRefs: categoryRefs}) }
-        </td>
-        <td key='category'>
-            {categoryCell(t, i)}
-        </td>
-        <td key='amount'>
-            {inputCell(t, 'amount', amountRefs, i, t.amount, {leftRefs: categoryRefs}) }
-        </td>
+        <thead>
+        <tr>
+            <th key='day-header'>Day</th>
+            <th key='comment-header'>Comment</th>
+            <th key='category-header'>Category</th>
+            <th key='amount-header'>Amount</th>
+        </tr>
+        </thead>
+        <tbody>
+        { transactions.map((t,i) => (<tr key={t.uuid}>
+            <td key='date'>
+                {inputCell(t, 'date', dateRefs, i, t.date, {rightRefs: commentRefs}, {maxLength: 2}) }
+            </td>
+            <td key='comment'>
+                {inputCell(t, 'comment', commentRefs, i, t.comment, {leftRefs: dateRefs, rightRefs: categoryRefs}) }
+            </td>
+            <td key='category'>
+                {categoryCell(t, i)}
+            </td>
+            <td key='amount'>
+                {inputCell(t, 'amount', amountRefs, i, t.amount, {leftRefs: categoryRefs}) }
+            </td>
 
-    </tr>)) }
-    </tbody>
-</table>})`
-   #border-collapse: collapse;
+        </tr>)) }
+        </tbody>
+    </table>})`
+    
    th, td {
       text-align: left;
       border: 1px solid #ccc;
       font-weight: normal;
     }
     th {
+      position: sticky;
+      top: 0;
       padding-top: 0.3rem;
       padding-bottom: 0.3rem;
     }
-        
+            
    input {
       display: inline-block;
       height: 1.4rem;
@@ -179,11 +190,8 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
    input.date {
      width: 3rem;
    }
-   input.description {
-     width: 30rem;
-   }
    input.comment {
-     width: 10rem;
+     width: 30rem;
    }
    input.amount {
      width: 4rem;
@@ -218,10 +226,9 @@ function usePrevious(value) {
 }
 
 const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
-const createRefs2d = (existingArray, n, m) => Array(n).fill(null).map((_, i) => existingArray[i] || createRefs1d([], m))
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 
-const Categories = styled(({className, categories, changeCategoryFor, categoryChanged, getTransaction}) => {
+const Categories = styled(({className, categories, changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}) => {
     const [selectCatRefs, setSelectCatRefs] = useState([]);
     const indexOf = categoryName => categories.findIndex(c => c.name === categoryName)
 
@@ -250,23 +257,31 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
         return <button ref={selectCatRefs[i]} {...props} >{name}</button>
     }
 
+    const tableKeyEvents = e => {
+        if (e.key === "Escape") quitCategoryMode()
+    }
+
     return <FocusTrap active={changeCategoryFor}>
-        <table className={className}>
-        <thead>
+        <table className={className} onKeyDown={tableKeyEvents}>
+            <thead>
             <tr>
                 <th key='name-header'>Name</th>
                 <th key='total-header'>Total</th>
             </tr>
-        </thead>
-        <tbody>
+            </thead>
+            <tbody>
             {  categories.map((c, i) => (<tr key={c.id}>
                 <td key='name'><SelectButton i={i} name={c.name}/></td>
                 <td key='total'><span>{c.total}</span></td>
             </tr>)) }
-        </tbody>
-    </table>
-</FocusTrap>})`
+            </tbody>
+        </table>
+    </FocusTrap>})`
    margin-left: 5rem;
+   table {
+     position: relative
+     height: 100%;
+   }   
    th, td {
       position: relative;
       text-align: left;
@@ -306,7 +321,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
 `;
 
 
-const categories = [
+const loadedCategories = [
     { id: 1, name: "Food", total: 100 },
     { id: 2, name: "School", total: 200 },
     { id: 3, name: "Car", total: 300 }
@@ -317,7 +332,6 @@ let loadedTransactions = [
         id: 1,
         uuid: uuidv4(),
         date: " 01",
-        description: "Lidl",
         comment: "",
         category: "Food",
         amount: 113.0,
@@ -326,7 +340,6 @@ let loadedTransactions = [
         id: 2,
         uuid: uuidv4(),
         date: "02",
-        description: "Spar",
         comment: "",
         category: "Food",
         amount: 21.0,
@@ -335,7 +348,6 @@ let loadedTransactions = [
         id: 3,
         uuid: uuidv4(),
         date: "03",
-        description: "Lidl",
         comment: "",
         category: "Food",
         amount: 11.0,
@@ -344,7 +356,6 @@ let loadedTransactions = [
         id: 4,
         uuid: uuidv4(),
         date: "03",
-        description: "Penny",
         comment: "",
         category: "Food",
         amount: 123.0,
@@ -353,7 +364,6 @@ let loadedTransactions = [
         id: 5,
         uuid: uuidv4(),
         date: "04",
-        description: "Lidl",
         comment: "",
         category: "Food",
         amount: 13.0
