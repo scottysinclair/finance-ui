@@ -13,6 +13,8 @@ const ContentDiv = styled.div`
 
 const classes = array => array.filter(i => i != null).reduce((a, b) => a + ' ' + b)
 
+const round = n => Math.round((n + Number.EPSILON) * 100) / 100
+
 export const DataEntry = ({onChangeHeaderInfo}) => {
     onChangeHeaderInfo("January 2020")
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
@@ -124,7 +126,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         if (filter.field) {
             console.log("FILTER")
             const ft = filteredTransactions()
-            const index = ft.findIndex(t => t.uuid  === focusedField.t.uuid)
+            const index = (focusedField && focusedField.t && ft.findIndex(t => t.uuid  === focusedField.t.uuid)) || -1
             if (ft.length > 0 && index > -1) focusField(focusedField.field, index)
             if (ft.length > 0 && index === -1) focusField(filter.field, 0)
             if (ft.length === 0 && index === -1 && filterPanelRef.current) filterPanelRef.current.focus()
@@ -209,6 +211,12 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                onChange={e => updateTransaction(t, field, e.target.value)}
                {...other  }/>
 
+    const totalPlus = filteredTransactions().map(t => t.amount || 0).filter(a => a > 0).reduce((a, b) => a + b, 0)
+    const totalMinus = filteredTransactions().map(t => t.amount || 0).filter(a => a < 0).reduce((a, b) => a + b, 0)
+    const totalAmount = filteredTransactions().map(t => t.amount || 0).reduce((a, b) => a + b, 0)
+
+
+
     return <div className={className}>
         {filter.text && <header>
             <input ref={filterPanelRef}
@@ -241,11 +249,18 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                 <td key='amount'>
                     {inputCell(t, 'amount', amountRefs, i, t.amount, {leftRefs: categoryRefs}) }
                 </td>
-
             </tr>)) }
             </tbody>
         </table>
         </div>
+        <dl>
+            <dt>Income</dt>
+            <dd>{round(totalPlus)}</dd>
+            <dt>Expenses</dt>
+            <dd>{round(totalMinus)}</dd>
+            <dt>Win</dt>
+            <dd>{round(totalAmount)}</dd>
+        </dl>
     </div>})`
     
   position: relative;
@@ -253,7 +268,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
    header {
      position: absolute;
      left: 0px;
-     top: -10px;
+     top: -2rem;
      display: block;
      border: 1px solid black;
      background: #ffffff;
@@ -317,6 +332,18 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
    button.changeCategoryFor {
       background-color: white;
       outline: 2px solid blue;
+   }
+   
+   dt {
+     display: inline-block;
+   }
+   dt::after {
+     content: ':';
+   }
+   dd {
+     display: inline-block;
+     margin-left: 0.3rem;
+     margin-right: 3rem;
    }
 `;
 
@@ -405,7 +432,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
                     {  filteredCategories()
                         .map((c, i) => (<tr key={c.id}>
                         <td key='name'><SelectButton i={i} name={c.name}/></td>
-                        <td key='total'><span>{c.total}</span></td>
+                        <td key='total'><span>{round(c.total)}</span></td>
                     </tr>)) }
                     </tbody>
                 </table>
@@ -422,7 +449,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
    header {
      position: absolute;
      left: 0px;
-     top: -30px;
+     top: -2rem;
      display: block;
      border: 1px solid black;
      background: #ffffff;
@@ -469,53 +496,3 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
      outline: none
    }
 `;
-
-
-const loadedCategories = [
-    { id: 1, name: "Food", total: 100 },
-    { id: 2, name: "School", total: 200 },
-    { id: 3, name: "Car", total: 300 }
-]
-
-let loadedTransactions = [
-    {
-        id: 1,
-        uuid: uuidv4(),
-        date: " 01",
-        comment: "",
-        category: "Food",
-        amount: 113.0,
-    },
-    {
-        id: 2,
-        uuid: uuidv4(),
-        date: "02",
-        comment: "",
-        category: "Food",
-        amount: 21.0,
-    },
-    {
-        id: 3,
-        uuid: uuidv4(),
-        date: "03",
-        comment: "",
-        category: "Food",
-        amount: 11.0,
-    },
-    {
-        id: 4,
-        uuid: uuidv4(),
-        date: "03",
-        comment: "",
-        category: "Food",
-        amount: 123.0,
-    },
-    {
-        id: 5,
-        uuid: uuidv4(),
-        date: "04",
-        comment: "",
-        category: "Food",
-        amount: 13.0
-    }
-];
