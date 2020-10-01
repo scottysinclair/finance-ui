@@ -43,6 +43,7 @@ const toMonthName = month => {
     if (month === 12) return 'December'
 }
 
+const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b]$");
 
 export const DataEntry = ({onChangeHeaderInfo}) => {
     const [changeCategoryFor, setChangeCategoryFor] = useState(null)
@@ -125,6 +126,9 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
         </DataEntrySection>)
 }
 
+
+
+
 const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}) => {
     const [filteredTransactions, setFilteredTransactions] = useState(transactions)
     const [dateRefs, setDateRefs] = useState([]);
@@ -205,12 +209,12 @@ useEffect(() => {
                 if (e.key === 'Home' || e.key === 'end') e.preventDefault()
                 if (e.key === 'ArrowUp') focusRef1d(refArray, i-1)
                 if (e.key === 'PageUp') {
-                    focusRef1d(refArray, i-10)
+                    focusRef1d(refArray, i-10 > 0 ? i-10 : 0)
                     e.preventDefault()
                 }
                 if (e.key === 'ArrowDown') focusRef1d(refArray, i+1)
                 if (e.key === 'PageDown')  {
-                    focusRef1d(refArray, i+10)
+                    focusRef1d(refArray, i+10 < refArray.length ? i+10 : refArray.length-1)
                     e.preventDefault()
                 }
                 if (e.key === 'ArrowLeft') focusRef1d(leftRefArray, i)
@@ -234,7 +238,7 @@ useEffect(() => {
         else if (e.key === 'Backspace' && filter.text && filter.text.length > 0 ) {
             setFilter({})
         }
-        if (e.key >= 'a' && e.key <= 'z') {
+        if (dataEntryKeys.test(e.key)) {
             if (filter.field === field) {
                 setFilter({...filter, field, text: filter.text + e.key})
             }
@@ -457,7 +461,9 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
         const props = changeCategoryFor ? {
             onKeyDown: e => {
                 if (e.key === 'ArrowUp') focusRef1d(selectCatRefs, i-1)
+                if (e.key === 'PageUp') focusRef1d(selectCatRefs, i-10 > 0 ? i-10 : 0)
                 if (e.key === 'ArrowDown') focusRef1d(selectCatRefs, i+1)
+                if (e.key === 'PageDown') focusRef1d(selectCatRefs, i+10 < selectCatRefs.length ? i + 10 : selectCatRefs.length - 1)
                 return true
             },
             className: 'selectMode',
@@ -472,7 +478,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
         if (e.key === 'Escape'  && filterText) setFilterText(null)
         if (e.key === 'Escape') quitCategoryMode()
         if (e.key === 'Backspace' && filterText) setFilterText(filterText.length > 0 ? filterText.substring(0, filterText.length-1) : null)
-        if (e.key >= 'a' && e.key<='z') {
+        if (dataEntryKeys.test(e.key)) {
             setFilterText(filterText ? filterText + e.key : e.key)
         }
     }
@@ -492,6 +498,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
                     </thead>
                     <tbody>
                     {  filteredCategories()
+                        .filter((c => changeCategoryFor || c.total !== 0))
                         .map((c, i) => (<tr key={c.id}>
                         <td key='name'><SelectButton i={i} name={c.name}/></td>
                         <td key='total'><span>{round(c.total)}</span></td>
