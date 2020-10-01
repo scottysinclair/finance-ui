@@ -15,30 +15,66 @@ const classes = array => array.filter(i => i != null).reduce((a, b) => a + ' ' +
 
 const round = n => Math.round((n + Number.EPSILON) * 100) / 100
 
+const loadTransactions = (year, month) => fetch(`http://localhost:8080/transactions/${year}/${month}`)
+    .then(response => response.json())
+    .then(json => json.transactions.map(t =>
+    { return {
+        id: t.id,
+        uuid: uuidv4(),
+        date: t.date.substring(8,10),
+        comment: t.comment,
+        category: t.category,
+        amount: t.amount
+    }}))
+
+const toMonthName = month => {
+    if (month === 1) return "January"
+    if (month === 2) return "February"
+    if (month === 3) return "March"
+    if (month === 4) return "April"
+    if (month === 5) return "May"
+    if (month === 6) return "June"
+    if (month === 7) return "July"
+    if (month === 8) return "August"
+    if (month === 9) return "September"
+    if (month === 10) return "October"
+    if (month === 11) return "November"
+    if (month === 12) return "December"
+}
+
+
 export const DataEntry = ({onChangeHeaderInfo}) => {
-    onChangeHeaderInfo("January 2020")
     const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
     const [categories, setCategories] = useState([])
     const [transactions, setTransactions] = useState([])
+    const [currentMonth, setCurrentMonth] = useState({ month: 1, year: 2019})
+
+    const setNextMonth = () => {
+        if (currentMonth.month === 12) setCurrentMonth({year: currentMonth.year + 1, month: 1})
+        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month + 1})
+    }
+    const setPrevMonth = () => {
+        if (currentMonth.month === 1) setCurrentMonth({year: currentMonth.year - 1, month: 12})
+        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month - 1})
+    }
+
     useEffect(() => {
         fetch('http://localhost:8080/categories')
             .then(response => response.json())
             .then(json => setCategories(json.categories.sort((a, b) => a.name.localeCompare( b.name))))
-            .then(_ => fetch('http://localhost:8080/transactions/2019/1'))
-            .then(response => response.json())
-            .then(json => json.transactions.map(t =>
-            { return {
-                id: t.id,
-                uuid: uuidv4(),
-                date: t.date.substring(8,10),
-                comment: t.comment,
-                category: t.category,
-                amount: t.amount
-            }}))
-            .then(transactions => {
-                setTransactions(transactions)
-            })
+            .then(_ => loadTransactions(2019, 1))
+            .then(t => setTransactions(t))
     }, [])
+
+    useEffect(() => {
+        onChangeHeaderInfo(<>
+            <button onClick={() => setPrevMonth()}>PREV</button>
+            <span>{toMonthName(currentMonth.month)} {currentMonth.year}</span>
+            <button onClick={_ => setNextMonth()}>NEXT</button>
+        </>)
+        loadTransactions(currentMonth.year, currentMonth.month).then(t => setTransactions(t))
+    }, [currentMonth])
+
 
     useEffect(() => {
         if (transactions) {
@@ -50,7 +86,6 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
                 }})))
         }
     }, [transactions])
-
 
     const categoryChanged = cat => {
         transactions.filter(t => t.uuid === changeCategoryFor).forEach(t => t.category = cat)
@@ -281,11 +316,9 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
      background: #ffffff;
      z-index: 2;
    }
-
-
     div.tableContainer {
         overflow-y: auto; 
-        max-height: 500px;      
+        max-height: 515px;      
     }
     
    th, td {
@@ -450,7 +483,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
    margin-left: 5rem;
    div.tableContainer {
     overflow-y: auto; 
-    max-height: 500px;
+    max-height: 515px;
     }    
    
    header {
@@ -461,6 +494,13 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
      border: 1px solid black;
      background: #ffffff;
      z-index: 2;
+     
+     input {
+      display: inline-block;
+      height: 1.4rem;
+      padding: 0.25rem;
+      border: none;
+     }
    }
    
    th, td {
@@ -486,7 +526,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
    button {
     display: inline-block;
     border: none;
-    height: 1.7rem;    
+    height: 1.9rem;    
     width: 100%;
     padding: 0.25rem;    
     padding-left: 1rem;
