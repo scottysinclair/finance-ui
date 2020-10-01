@@ -1,7 +1,7 @@
 import React, {createRef, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid';
-import FocusTrap from "focus-trap-react";
+import FocusTrap from 'focus-trap-react';
 
 
 const DataEntrySection = styled.section`  
@@ -21,25 +21,26 @@ const loadTransactions = (year, month) => fetch(`http://localhost:8080/transacti
     { return {
         id: t.id,
         uuid: uuidv4(),
-        date: t.date.substring(8,10),
+        fullDate : t.day,
+        day: t.date.substring(8,10),
         comment: t.comment,
         category: t.category,
         amount: t.amount
     }}))
 
 const toMonthName = month => {
-    if (month === 1) return "January"
-    if (month === 2) return "February"
-    if (month === 3) return "March"
-    if (month === 4) return "April"
-    if (month === 5) return "May"
-    if (month === 6) return "June"
-    if (month === 7) return "July"
-    if (month === 8) return "August"
-    if (month === 9) return "September"
-    if (month === 10) return "October"
-    if (month === 11) return "November"
-    if (month === 12) return "December"
+    if (month === 1) return 'January'
+    if (month === 2) return 'February'
+    if (month === 3) return 'March'
+    if (month === 4) return 'April'
+    if (month === 5) return 'May'
+    if (month === 6) return 'June'
+    if (month === 7) return 'July'
+    if (month === 8) return 'August'
+    if (month === 9) return 'September'
+    if (month === 10) return 'October'
+    if (month === 11) return 'November'
+    if (month === 12) return 'December'
 }
 
 
@@ -96,7 +97,7 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
     }
     const getTransaction = uuid => transactions.find(t => t.uuid === uuid)
     const updateTransaction = (t, field,value) => {
-        console.log("update T ", t, field, value)
+        console.log('update T ', t, field, value)
         const newT = {...t}
         newT[field] = value
         console.log(newT)
@@ -104,12 +105,12 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
     }
 
     const onKeyDown = e => {
-        //console.log("TOP KEYDOWN", e.getModifierState("Shift"), e.key)
-        if ((e.getModifierState("Shift") || e.getModifierState("Alt")) && e.key === 'ArrowLeft') {
+        console.log('TOP KEYDOWN', e.getModifierState('Shift'), e.key)
+        if (e.key === 'Home') {
             setPrevMonth()
             e.preventDefault()
         }
-        if ((e.getModifierState("Shift") || e.getModifierState("Alt")) && e.key === 'ArrowRight') {
+        if (e.key === 'End') {
             setNextMonth()
             e.preventDefault()
         }
@@ -136,18 +137,18 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     const prev = usePrevious({changeCategoryFor, activeCell, filter});
 
     const focusField = (field, i) => {
-        if (field === 'date' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
+        if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
         if (field === 'comment' && commentRefs[i] && commentRefs[i].current) commentRefs[i].current.focus()
         if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) categoryRefs[i].current.focus()
         if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
     }
 
     useEffect(() => {
-//        console.log("TRANS MOUNT")
+//        console.log('TRANS MOUNT')
     }, [])
 
     useEffect(() => {
-//        console.log("BUILDING REFS")
+//        console.log('BUILDING REFS')
         setDateRefs( createRefs1d(dateRefs, transactions.length));
         setCommentRefs( createRefs1d(commentRefs, transactions.length));
         setCategoryRefs( createRefs1d(categoryRefs, transactions.length));
@@ -192,27 +193,28 @@ useEffect(() => {
 
     useEffect(() => {
        // console.log(filter.field, filter.text, filter.source)
-        setFilteredTransactions(transactions.filter(t => filter.field == null || (t[filter.field] + "").toLowerCase().includes(filter.text.toLowerCase())))
+        setFilteredTransactions(transactions.filter(t => filter.field == null || (t[filter.field] + '').toLowerCase().includes(filter.text.toLowerCase())))
     }, [transactions, filter])
 
     const withUuid = id => filteredTransactions.findIndex(t => t.uuid === id)
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
-            console.log("KEYDOWN ", field)
+            console.log('KEYDOWN ', field)
             if (!isActive(t, field)) {
-                if (e.key === "ArrowUp") focusRef1d(refArray, i-1)
-                if (e.key === "PageUp") {
+                if (e.key === 'Home' || e.key === 'end') e.preventDefault()
+                if (e.key === 'ArrowUp') focusRef1d(refArray, i-1)
+                if (e.key === 'PageUp') {
                     focusRef1d(refArray, i-10)
                     e.preventDefault()
                 }
-                if (e.key === "ArrowDown") focusRef1d(refArray, i+1)
-                if (e.key === "PageDown")  {
+                if (e.key === 'ArrowDown') focusRef1d(refArray, i+1)
+                if (e.key === 'PageDown')  {
                     focusRef1d(refArray, i+10)
                     e.preventDefault()
                 }
-                if (e.key === "ArrowLeft") focusRef1d(leftRefArray, i)
-                if (e.key === "ArrowRight") focusRef1d(rightRefArray, i)
+                if (e.key === 'ArrowLeft') focusRef1d(leftRefArray, i)
+                if (e.key === 'ArrowRight') focusRef1d(rightRefArray, i)
                 onKeyDownForFilter(field)(e)
             }
             if (e.key === 'Enter' && field !== 'category') {
@@ -244,7 +246,7 @@ useEffect(() => {
 
     const isActive = (t, field) => {
         if (t.id === 3 && field === 'description') {
-            if (activeCell) console.log("ISACTIVE ", activeCell.t, activeCell.field, activeCell && activeCell.t === t && activeCell.field === field)
+            if (activeCell) console.log('ISACTIVE ', activeCell.t, activeCell.field, activeCell && activeCell.t === t && activeCell.field === field)
         }
         return activeCell && activeCell.t.uuid === t.uuid && activeCell.field === field
     }
@@ -282,7 +284,7 @@ useEffect(() => {
             <input ref={infoPanelRef}
                    readOnly={true}
                    autoFocus={filteredTransactions.length === 0}
-                   value={filter.text ? filter.text : 'No data for month'}
+                   value={filter.text ? `${filter.field}: ${filter.text}` : 'No data for month'}
                    onKeyDown={filter.field && onKeyDownForFilter(filter.field)} />
         </header>}
         <div className='tableContainer'>
@@ -299,8 +301,8 @@ useEffect(() => {
             <tbody>
             {   filteredTransactions
                 .map((t,i) => (<tr key={t.uuid}>
-                <td key='date'>
-                    {inputCell(t, 'date', dateRefs, i, t.date, {rightRefs: commentRefs}, {maxLength: 2}) }
+                <td key='day'>
+                    {inputCell(t, 'day', dateRefs, i, t.day, {rightRefs: commentRefs}, {maxLength: 2}) }
                 </td>
                 <td key='comment'>
                     {inputCell(t, 'comment', commentRefs, i, t.comment, {leftRefs: dateRefs, rightRefs: categoryRefs}) }
@@ -366,7 +368,7 @@ useEffect(() => {
    input.active {
        outline: 2px solid blue;
    }
-   input.date {
+   input.day {
      width: 3rem;
    }
    input.comment {
@@ -454,11 +456,11 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     const SelectButton = ({i, name}) => {
         const props = changeCategoryFor ? {
             onKeyDown: e => {
-                if (e.key === "ArrowUp") focusRef1d(selectCatRefs, i-1)
-                if (e.key === "ArrowDown") focusRef1d(selectCatRefs, i+1)
+                if (e.key === 'ArrowUp') focusRef1d(selectCatRefs, i-1)
+                if (e.key === 'ArrowDown') focusRef1d(selectCatRefs, i+1)
                 return true
             },
-            className: "selectMode",
+            className: 'selectMode',
             onClick: () => categoryChanged(name)
         } : {
             disabled: true
@@ -467,9 +469,9 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     }
 
     const tableKeyEvents = e => {
-        if (e.key === "Escape"  && filterText) setFilterText(null)
-        if (e.key === "Escape") quitCategoryMode()
-        if (e.key === "Backspace" && filterText) setFilterText(filterText.length > 0 ? filterText.substring(0, filterText.length-1) : null)
+        if (e.key === 'Escape'  && filterText) setFilterText(null)
+        if (e.key === 'Escape') quitCategoryMode()
+        if (e.key === 'Backspace' && filterText) setFilterText(filterText.length > 0 ? filterText.substring(0, filterText.length-1) : null)
         if (e.key >= 'a' && e.key<='z') {
             setFilterText(filterText ? filterText + e.key : e.key)
         }
@@ -478,7 +480,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
     return <FocusTrap active={changeCategoryFor !== null}>
         <div className={className} onKeyDown={tableKeyEvents}>
             { filterText && <header>
-                <input readOnly={true} ref={filterTextRef} value={filterText}/>
+                <input readOnly={true} ref={filterTextRef} value={`name: ${filterText}`}/>
             </header> }
             <div className='tableContainer'>
                 <table>
