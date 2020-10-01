@@ -77,11 +77,11 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
 }
 
 const Transactions = styled(({className, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}) => {
+    const [filteredTransactions, setFilteredTransactions] = useState(transactions)
     const [dateRefs, setDateRefs] = useState([]);
     const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
-    const [focusedField, setFocusedField] =  useState(null)
     const [activeCell, setActiveCell] = useState(null);
     const filterPanelRef = useRef()
     const [filter, setFilter] = useState({});
@@ -102,11 +102,11 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         setCommentRefs( createRefs1d(commentRefs, transactions.length));
         setCategoryRefs( createRefs1d(dateRefs, transactions.length));
         setAmountRefs( createRefs1d(dateRefs, transactions.length));
-    }, [transactions.length]);
+    }, [filteredTransactions.length]);
 
     useEffect(() => {
         if (!changeCategoryFor && prev && prev.changeCategoryFor) {
-            if (filteredTransactions().findIndex(t => t.uuid === prev.changeCategoryFor) >= 0) {
+            if (filteredTransactions.findIndex(t => t.uuid === prev.changeCategoryFor) >= 0) {
                 focusRef1d(categoryRefs, withUuid(prev.changeCategoryFor))
             }
             else {
@@ -124,23 +124,24 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     useEffect(() => {
         if (filter.field) {
-            console.log("FILTER")
-            const ft = filteredTransactions()
-            const index = (focusedField && focusedField.t && ft.findIndex(t => t.uuid  === focusedField.t.uuid)) || -1
-            if (ft.length > 0 && index > -1) focusField(focusedField.field, index)
-            if (ft.length > 0 && index === -1) focusField(filter.field, 0)
-            if (ft.length === 0 && index === -1 && filterPanelRef.current) filterPanelRef.current.focus()
+            console.log("USE EFFECT CALC FOCUS")
+            const [transaction_uuid, field] = filter.source.split('_')
+            const index = (transaction_uuid && filteredTransactions.findIndex(t => t.uuid  === transaction_uuid)) || -1
+            if (filteredTransactions.length > 0 && index > -1) focusField(field, index)
+            if (filteredTransactions.length > 0 && index === -1) focusField(field, 0)
+            if (filteredTransactions.length === 0 && index === -1 && filterPanelRef.current) filterPanelRef.current.focus()
         }
         else {
             console.log("OUT")
             prev && prev.filter && prev.filter.field && focusField(prev.filter.field, 0)
         }
-    }, [filter])
+    }, [filteredTransactions])
 
+    useEffect(() => {
+        setFilteredTransactions(transactions.filter(t => filter.field == null || (t[filter.field] + "").toLowerCase().includes(filter.text.toLowerCase())))
+    }, [transactions, filter])
 
-    const filteredTransactions = () => transactions.filter(t => filter.field == null || (t[filter.field] + "").toLowerCase().includes(filter.text.toLowerCase()))
-
-    const withUuid = id => filteredTransactions().findIndex(t => t.uuid === id)
+    const withUuid = id => filteredTransactions.findIndex(t => t.uuid === id)
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
@@ -168,17 +169,18 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     }
     const onKeyDownForFilter = (field) => e => {
         if (e.key === 'Backspace' && filter.text && filter.text.length > 1 ) {
-            setFilter({field, text: filter.text.substring(0, filter.text.length - 1)})
+            setFilter({...filter, field, text: filter.text.substring(0, filter.text.length - 1)})
         }
         else if (e.key === 'Backspace' && filter.text && filter.text.length > 0 ) {
             setFilter({})
         }
         if (e.key >= 'a' && e.key <= 'z') {
             if (filter.field === field) {
-                setFilter({ field, text: filter.text + e.key})
+                setFilter({...filter, field, text: filter.text + e.key})
             }
             else {
-                setFilter({field, text: e.key})
+                console.log("!!", e.target.id)
+                setFilter({...filter, field, source: e.target.id, text: e.key})
             }
         }
     }
@@ -191,7 +193,8 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     }
 
     const categoryCell = (t, i) => {
-        return <button ref={categoryRefs[i]}
+        return <button id={`${t.uuid}_category`}
+                       ref={categoryRefs[i]}
                        className={classes(['category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null])}
                        onKeyDown={onKeyDown(t, 'category', categoryRefs, i, dateRefs, amountRefs)}
                        disabled={changeCategoryFor != null}
@@ -200,20 +203,20 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
 
     const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}, other) =>
-        <input key={`${t.uuid}-${field}`} ref={myRefs[i]}
+        <input key={`${t.uuid}_${field}`} ref={myRefs[i]}
+               id={`${t.uuid}_${field}`}
                className={classes([field, isActive(t, field) ? 'active' : null])}
                onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
                readOnly={!isActive(t, field)}
-               onFocus={_ => setFocusedField({ t: t, field: field})}
                disabled={changeCategoryFor != null}
                type='text'
                value={value}
                onChange={e => updateTransaction(t, field, e.target.value)}
                {...other  }/>
 
-    const totalPlus = filteredTransactions().map(t => t.amount || 0).filter(a => a > 0).reduce((a, b) => a + b, 0)
-    const totalMinus = filteredTransactions().map(t => t.amount || 0).filter(a => a < 0).reduce((a, b) => a + b, 0)
-    const totalAmount = filteredTransactions().map(t => t.amount || 0).reduce((a, b) => a + b, 0)
+    const totalPlus = filteredTransactions.map(t => t.amount || 0).filter(a => a > 0).reduce((a, b) => a + b, 0)
+    const totalMinus = filteredTransactions.map(t => t.amount || 0).filter(a => a < 0).reduce((a, b) => a + b, 0)
+    const totalAmount = filteredTransactions.map(t => t.amount || 0).reduce((a, b) => a + b, 0)
 
 
 
@@ -235,7 +238,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
             </tr>
             </thead>
             <tbody>
-            {   filteredTransactions()
+            {   filteredTransactions
                 .map((t,i) => (<tr key={t.uuid}>
                 <td key='date'>
                     {inputCell(t, 'date', dateRefs, i, t.date, {rightRefs: commentRefs}, {maxLength: 2}) }
