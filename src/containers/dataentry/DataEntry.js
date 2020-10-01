@@ -1,4 +1,4 @@
-import React, {createRef, useEffect, useRef, useState} from 'react';
+import React, {createRef, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid';
 import FocusTrap from "focus-trap-react";
@@ -44,7 +44,7 @@ const toMonthName = month => {
 
 
 export const DataEntry = ({onChangeHeaderInfo}) => {
-    const  [changeCategoryFor, setChangeCategoryFor] = useState(null)
+    const [changeCategoryFor, setChangeCategoryFor] = useState(null)
     const [categories, setCategories] = useState([])
     const [transactions, setTransactions] = useState([])
     const [currentMonth, setCurrentMonth] = useState({ month: 1, year: 2019})
@@ -102,8 +102,21 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
         console.log(newT)
         setTransactions(transactions.map(x => x.uuid === newT.uuid ? newT : x))
     }
+
+    const onKeyDown = e => {
+        //console.log("TOP KEYDOWN", e.getModifierState("Shift"), e.key)
+        if ((e.getModifierState("Shift") || e.getModifierState("Alt")) && e.key === 'ArrowLeft') {
+            setPrevMonth()
+            e.preventDefault()
+        }
+        if ((e.getModifierState("Shift") || e.getModifierState("Alt")) && e.key === 'ArrowRight') {
+            setNextMonth()
+            e.preventDefault()
+        }
+    }
+
     return (
-        <DataEntrySection>
+        <DataEntrySection onKeyDown={onKeyDown}>
             <ContentDiv>
                 <Transactions {...{transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
@@ -118,7 +131,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     const [categoryRefs, setCategoryRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
     const [activeCell, setActiveCell] = useState(null);
-    const filterPanelRef = useRef()
+    const infoPanelRef = useRef()
     const [filter, setFilter] = useState({});
     const prev = usePrevious({changeCategoryFor, activeCell, filter});
 
@@ -126,17 +139,19 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         if (field === 'date' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
         if (field === 'comment' && commentRefs[i] && commentRefs[i].current) commentRefs[i].current.focus()
         if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) categoryRefs[i].current.focus()
+        if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
     }
 
     useEffect(() => {
-        console.log("TRANS MOUNT")
+//        console.log("TRANS MOUNT")
     }, [])
 
     useEffect(() => {
+//        console.log("BUILDING REFS")
         setDateRefs( createRefs1d(dateRefs, transactions.length));
         setCommentRefs( createRefs1d(commentRefs, transactions.length));
-        setCategoryRefs( createRefs1d(dateRefs, transactions.length));
-        setAmountRefs( createRefs1d(dateRefs, transactions.length));
+        setCategoryRefs( createRefs1d(categoryRefs, transactions.length));
+        setAmountRefs( createRefs1d(amountRefs, transactions.length));
     }, [transactions.length]);
 
     useEffect(() => {
@@ -150,13 +165,16 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         }
     }, [changeCategoryFor])
 
-    useEffect(() => {
-        //TODO: is this really required...
-        if (activeCell)
-            activeCell.ref && activeCell.ref.current && activeCell.ref.current.focus()
-        else
-            prev && prev.activeCell && prev.activeCell.ref && prev.activeCell.ref.current && prev.activeCell.ref.current.focus()
+    /*
+useEffect(() => {
+    //TODO: is this really required...
+    if (activeCell)
+        activeCell.ref && activeCell.ref.current && activeCell.ref.current.focus()
+    else
+        prev && prev.activeCell && prev.activeCell.ref && prev.activeCell.ref.current && prev.activeCell.ref.current.focus()
+
     }, [activeCell])
+     */
 
     useEffect(() => {
         if (filter.field) {
@@ -165,7 +183,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
             const index = (transaction_uuid && filteredTransactions.findIndex(t => t.uuid  === transaction_uuid)) || -1
             if (index >= 0) focusField(field, index)
             else if (filteredTransactions.length > 0 ) focusField(field, 0)
-            else if (filterPanelRef.current) filterPanelRef.current.focus()
+            else if (infoPanelRef.current) infoPanelRef.current.focus()
         }
         else {
             prev && prev.filter && prev.filter.field && focusField(prev.filter.field, 0)
@@ -181,6 +199,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
+            console.log("KEYDOWN ", field)
             if (!isActive(t, field)) {
                 if (e.key === "ArrowUp") focusRef1d(refArray, i-1)
                 if (e.key === "PageUp") {
@@ -234,7 +253,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         return <button id={`${t.uuid}_category`}
                        ref={categoryRefs[i]}
                        className={classes(['category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null])}
-                       onKeyDown={onKeyDown(t, 'category', categoryRefs, i, dateRefs, amountRefs)}
+                       onKeyDown={onKeyDown(t, 'category', categoryRefs, i, commentRefs, amountRefs)}
                        disabled={changeCategoryFor != null}
                        onClick={e => e.preventDefault()}>{t.category}</button>
     }
@@ -249,6 +268,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                readOnly={!isActive(t, field)}
                disabled={changeCategoryFor != null}
                type='text'
+               autoFocus={i === 0 && field === 'comment' ? true : false}
                value={value ? value : ''}
                onChange={e => updateTransaction(t, field, e.target.value)}
                {...other  }/>
@@ -257,16 +277,16 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     const totalMinus = filteredTransactions.map(t => t.amount || 0).filter(a => a < 0).reduce((a, b) => a + b, 0)
     const totalAmount = filteredTransactions.map(t => t.amount || 0).reduce((a, b) => a + b, 0)
 
-
-
     return <div className={className}>
-        {filter.text && <header>
-            <input ref={filterPanelRef}
+        { (filteredTransactions.length === 0 || filter.text) && <header>
+            <input ref={infoPanelRef}
                    readOnly={true}
-                   value={filter.text}
+                   autoFocus={filteredTransactions.length === 0}
+                   value={filter.text ? filter.text : 'No data for month'}
                    onKeyDown={filter.field && onKeyDownForFilter(filter.field)} />
         </header>}
         <div className='tableContainer'>
+        { filteredTransactions.length > 0 &&
           <table>
             <thead>
             <tr>
@@ -293,14 +313,14 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                 </td>
             </tr>)) }
             </tbody>
-        </table>
+        </table> }
         </div>
         <dl>
             <dt>Income</dt>
             <dd>{round(totalPlus)}</dd>
             <dt>Expenses</dt>
             <dd>{round(totalMinus)}</dd>
-            <dt>Win</dt>
+            <dt>Delta</dt>
             <dd>{round(totalAmount)}</dd>
         </dl>
     </div>})`
