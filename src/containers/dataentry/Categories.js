@@ -21,7 +21,6 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
     }, [categories.length]);
 
     useEffect(() => {
-        //focus on the first category when changing the category for a transaction
         if (changeCategoryFor) {
             if (filteredCategories().length === 0 && filterTextRef.current) {
                 filterTextRef.current.focus()
@@ -38,7 +37,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
         else {
             setFilterText(null)
         }
-    }, [changeCategoryFor, filterText])
+    }, [categories, changeCategoryFor, filterText])
 
     const SelectButton = ({i, name}) => {
         const props = changeCategoryFor ? {

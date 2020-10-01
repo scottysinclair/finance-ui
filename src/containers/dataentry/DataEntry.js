@@ -51,25 +51,28 @@ const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b]$");
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
 
-export const DataEntry = ({onChangeHeaderInfo}) => {
+
+const passesFilter = (t, filter) =>  {
+    const filterKeys = Object.keys(filter).filter(k => !k.startsWith('--'))
+    return filterKeys.length === 0  ||
+        filterKeys.map(k => { return { f: k, v: filter[k].toLowerCase()}})
+        .filter(pair => t[pair.f] && t[pair.f].toLowerCase().includes(pair.v))
+        .length  === filterKeys.length
+}
+
+export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const [changeCategoryFor, setChangeCategoryFor] = useState(null)
     const [categories, setCategories] = useState([])
     const [transactions, setTransactions] = useState([])
+    const [filteredTransactions, setFilteredTransactions] = useState([])
     const [currentMonth, setCurrentMonth] = useState({ month: 1, year: 2019})
     const [showChart, setShowChart] = useState(false)
     const [filter, setFilter] = useState({})
+    const dayFilterRef = useRef()
+    const commentFilterRef = useRef()
+    const categoryFilterRef = useRef()
+    const amountFilterRef = useRef()
     const [filterChart, setFilterChart] = useState(null)
-
-    const updateFilter = (field, value) => setFilter({...filter, field: value})
-
-    const setNextMonth = () => {
-        if (currentMonth.month === 12) setCurrentMonth({year: currentMonth.year + 1, month: 1})
-        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month + 1})
-    }
-    const setPrevMonth = () => {
-        if (currentMonth.month === 1) setCurrentMonth({year: currentMonth.year - 1, month: 12})
-        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month - 1})
-    }
 
     useEffect(() => {
         fetch('http://localhost:8080/categories')
@@ -78,6 +81,12 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
             .then(_ => loadTransactions(2019, 1))
             .then(t => setTransactions(t))
     }, [])
+
+
+    useEffect(() => {
+        console.log("Applying filter ", filter)
+        setFilteredTransactions(transactions.filter(t => passesFilter(t, filter)))
+    },[transactions, filter])
 
     useEffect(() => {
         onChangeHeaderInfo(<>
@@ -90,15 +99,64 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
 
 
     useEffect(() => {
-        if (transactions) {
+        if (filteredTransactions) {
             setCategories((categories.map(c => {
-                return {
+                const newTotal = filteredTransactions.filter(t => t.category === c.name).map(t => t.amount).reduce((total, v) => total + v, 0)
+                return c.total === newTotal ? c : {
                     id: c.id,
                     name: c.name,
-                    total: transactions.filter(t => t.category === c.name).map(t => t.amount).reduce((total, v) => total + v, 0)
+                    total: newTotal
                 }})))
         }
-    }, [transactions])
+
+        if (filteredTransactions.length === 0 && filter['--source'] && !changeCategoryFor) {
+            const x = getFilterRef(filter['--source'].split('_')[1]); x && x.current && x.current.focus()
+        }
+    }, [filteredTransactions, changeCategoryFor])
+
+    const getFilterRef = source => {
+        console.log(source)
+        if (source === 'day') return dayFilterRef
+        if (source === 'comment') return commentFilterRef
+        if (source === 'category') return categoryFilterRef
+        if (source === 'amount') return amountFilterRef
+    }
+
+
+    const updateFilter = (field, value, source) => {
+        console.log("update filter ", field, " ", value)
+        const x = {...filter }
+        if (value) x[field] = value
+        else delete x[field]
+        x['--source'] = source
+        setFilter(x)
+    }
+
+    const onKeyDownForFilter = field => e => {
+        if (e.key === 'Backspace' && filter[field] && filter[field].length > 1 ) {
+            updateFilter(field, filter[field].substring(0, filter[field].length - 1), field)
+        }
+        else if (e.key === 'Backspace' && filter[field] && filter[field].length > 0 ) {
+            updateFilter(field, null, field)
+        }
+        if (dataEntryKeys.test(e.key)) {
+            if (filter[field]) {
+                updateFilter(field, filter[field] + e.key, field)
+            }
+            else {
+                updateFilter(field, e.key, field)
+            }
+        }
+    }
+
+    const setNextMonth = () => {
+        if (currentMonth.month === 12) setCurrentMonth({year: currentMonth.year + 1, month: 1})
+        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month + 1})
+    }
+    const setPrevMonth = () => {
+        if (currentMonth.month === 1) setCurrentMonth({year: currentMonth.year - 1, month: 12})
+        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month - 1})
+    }
 
     const categoryChanged = cat => {
         transactions.filter(t => t.uuid === changeCategoryFor).forEach(t => t.category = cat)
@@ -137,7 +195,7 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
     }
 
     return (
-        <DataEntrySection onKeyDown={onKeyDown}>
+        <DataEntrySection className={className} onKeyDown={onKeyDown}>
             { showChart ? <>
                 <input name='chartCategories' autoFocus={true} value={filterChart} onChange={e => setFilterChart(e.target.value)}/>
                 <Barchart data={categories
@@ -145,11 +203,73 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
                     .filter(c => !filterChart || c.name.toLowerCase().includes(filterChart.toLowerCase()))}/>
             </>: (
             <ContentDiv>
-                <Transactions {...{transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
+                { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && <header className='infoHeader'>
+                    <table>
+                        <tr>
+                            <th className='day'>
+                                <input ref={dayFilterRef}
+                                       readOnly={true}
+                                       value={filter.day}
+                                       onKeyDown={onKeyDownForFilter('day')}
+                                       maxLength={1}/>
+                            </th>
+                            <th className='comment'>
+                                <input ref={commentFilterRef}
+                                       readOnly={true}
+                                       value={filter.comment}
+                                       onKeyDown={onKeyDownForFilter('comment')}
+                                       maxLength={1}/>
+                            </th>
+                            <th className='category'>
+                                <input ref={categoryFilterRef}
+                                       readOnly={true}
+                                       value={filter.category}
+                                       onKeyDown={onKeyDownForFilter('category')}
+                                       maxLength={1}/>
+                            </th>
+                            <th className='amount'>
+                                <input ref={amountFilterRef}
+                                       readOnly={true}
+                                       value={filter.amount}
+                                       onKeyDown={onKeyDownForFilter('amount')}
+                                       maxLength={1}/>
+                            </th>
+                        </tr>
+                    </table>
+                </header>}
+
+                <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
             </ContentDiv>) }
         </DataEntrySection>)
-}
+})`
+ header {
+     position: absolute;
+     left: 4rem;
+     top: 4rem;
+     display: block;
+     border: 1px solid black;
+     background: #ffffff;
+     z-index: 2;
+     
+     th {
+       padding-top: 0.3rem;
+       width: 3rem;
+     }
+     
+   }
+ .infoHeader {
+/*   input {
+     display:  inline-block;
+     position: absolute;
+     width: 0;
+     height: 0
+     margin: 0;
+     padding: 0;
+     border: none;
+   } */
+  }  
+`
 
 
 
