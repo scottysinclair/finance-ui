@@ -102,7 +102,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
         setCommentRefs( createRefs1d(commentRefs, transactions.length));
         setCategoryRefs( createRefs1d(dateRefs, transactions.length));
         setAmountRefs( createRefs1d(dateRefs, transactions.length));
-    }, [filteredTransactions.length]);
+    }, [transactions.length]);
 
     useEffect(() => {
         if (!changeCategoryFor && prev && prev.changeCategoryFor) {
@@ -116,6 +116,7 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
     }, [changeCategoryFor])
 
     useEffect(() => {
+        //TODO: is this really required...
         if (activeCell)
             activeCell.ref && activeCell.ref.current && activeCell.ref.current.focus()
         else
@@ -124,20 +125,20 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
 
     useEffect(() => {
         if (filter.field) {
-            console.log("USE EFFECT CALC FOCUS")
             const [transaction_uuid, field] = filter.source.split('_')
+            console.log(transaction_uuid, field)
             const index = (transaction_uuid && filteredTransactions.findIndex(t => t.uuid  === transaction_uuid)) || -1
-            if (filteredTransactions.length > 0 && index > -1) focusField(field, index)
-            if (filteredTransactions.length > 0 && index === -1) focusField(field, 0)
-            if (filteredTransactions.length === 0 && index === -1 && filterPanelRef.current) filterPanelRef.current.focus()
+            if (index >= 0) focusField(field, index)
+            else if (filteredTransactions.length > 0 ) focusField(field, 0)
+            else if (filterPanelRef.current) filterPanelRef.current.focus()
         }
         else {
-            console.log("OUT")
             prev && prev.filter && prev.filter.field && focusField(prev.filter.field, 0)
         }
     }, [filteredTransactions])
 
     useEffect(() => {
+       // console.log(filter.field, filter.text, filter.source)
         setFilteredTransactions(transactions.filter(t => filter.field == null || (t[filter.field] + "").toLowerCase().includes(filter.text.toLowerCase())))
     }, [transactions, filter])
 
@@ -164,6 +165,9 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                 if (!isActive(t, field)) setActiveCell({t, field, ref: refArray[i]})
                 else setActiveCell(null)
             }
+            if (e.key === 'Enter' && field === 'category' && !changeCategoryFor) {
+                setChangeCategoryFor(t.uuid)
+            }
             if (e.key === 'Escape' && filter.text) setFilter({})
         }
     }
@@ -179,7 +183,6 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                 setFilter({...filter, field, text: filter.text + e.key})
             }
             else {
-                console.log("!!", e.target.id)
                 setFilter({...filter, field, source: e.target.id, text: e.key})
             }
         }
@@ -198,19 +201,20 @@ const Transactions = styled(({className, transactions, changeCategoryFor, setCha
                        className={classes(['category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null])}
                        onKeyDown={onKeyDown(t, 'category', categoryRefs, i, dateRefs, amountRefs)}
                        disabled={changeCategoryFor != null}
-                       onClick={() => setChangeCategoryFor(t.uuid) }>{t.category}</button>
+                       onClick={e => e.preventDefault()}>{t.category}</button>
     }
 
 
     const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}, other) =>
-        <input key={`${t.uuid}_${field}`} ref={myRefs[i]}
+        <input key={`${t.uuid}_${field}`}
+               ref={myRefs[i]}
                id={`${t.uuid}_${field}`}
                className={classes([field, isActive(t, field) ? 'active' : null])}
                onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
                readOnly={!isActive(t, field)}
                disabled={changeCategoryFor != null}
                type='text'
-               value={value}
+               value={value ? value : ''}
                onChange={e => updateTransaction(t, field, e.target.value)}
                {...other  }/>
 
@@ -418,7 +422,7 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
         }
     }
 
-    return <FocusTrap active={changeCategoryFor}>
+    return <FocusTrap active={changeCategoryFor !== null}>
         <div className={className} onKeyDown={tableKeyEvents}>
             { filterText && <header>
                 <input readOnly={true} ref={filterTextRef} value={filterText}/>
