@@ -646,5 +646,5 @@ const Barchart = styled(({className, data}) => <div className={className}>
         motionDamping={15}
     />
 </div>)`
-  height: 400px;
+  height: 600px;
 `
