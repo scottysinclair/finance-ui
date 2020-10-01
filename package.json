@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^7.2.1",
     "fetch": "^1.1.0",
     "focus-trap-react": "^8.0.0",
+    "nivo": "^0.31.0",
     "react": "^16.13.1",
     "react-dom": "^16.13.1",
     "react-router-dom": "^5.2.0",

@@ -2,6 +2,7 @@ import React, {createRef, useEffect, useLayoutEffect, useRef, useState} from 're
 import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid';
 import FocusTrap from 'focus-trap-react';
+import {ResponsiveBar} from "nivo";
 
 
 const DataEntrySection = styled.section`  
@@ -50,6 +51,8 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
     const [categories, setCategories] = useState([])
     const [transactions, setTransactions] = useState([])
     const [currentMonth, setCurrentMonth] = useState({ month: 1, year: 2019})
+    const [showChart, setShowChart] = useState(false)
+    const [filterChart, setFilterChart] = useState(null)
 
     const setNextMonth = () => {
         if (currentMonth.month === 12) setCurrentMonth({year: currentMonth.year + 1, month: 1})
@@ -115,17 +118,30 @@ export const DataEntry = ({onChangeHeaderInfo}) => {
             setNextMonth()
             e.preventDefault()
         }
+        if (e.key === 'F1') {
+            setShowChart(true)
+            e.preventDefault()
+        }
+        if (e.key === 'Escape' && showChart) {
+            setShowChart(false)
+            e.preventDefault()
+        }
     }
 
     return (
         <DataEntrySection onKeyDown={onKeyDown}>
+            { showChart ? <>
+                <input name='chartCategories' autoFocus={true} value={filterChart} onChange={e => setFilterChart(e.target.value)}/>
+                <Barchart data={categories
+                    .filter(c => c.total !== 0)
+                    .filter(c => !filterChart || c.name.toLowerCase().includes(filterChart.toLowerCase()))}/>
+            </>: (
             <ContentDiv>
                 <Transactions {...{transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
-            </ContentDiv>
+            </ContentDiv>) }
         </DataEntrySection>)
 }
-
 
 
 
@@ -572,3 +588,63 @@ const Categories = styled(({className, categories, changeCategoryFor, categoryCh
      outline: none
    }
 `;
+
+const Barchart = styled(({className, data}) => <div className={className}>
+    <ResponsiveBar
+        data={data}
+        layout='horizontal'
+        keys={[ 'total']}
+        indexBy="name"
+        margin={{ top: 50, right: 130, bottom: 50, left: 130 }}
+        padding={0.3}
+        axisTop={null}
+        axisRight={null}
+        axisBottom={{
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: 0,
+            legend: 'Categories',
+            legendPosition: 'middle',
+            legendOffset: 32
+        }}
+        axisLeft={{
+            tickSize: 5,
+            tickPadding: 5,
+            tickRotation: 0,
+            legend: 'Amount',
+            legendPosition: 'middle',
+            legendOffset: -40
+        }}
+        labelSkipWidth={12}
+        labelSkipHeight={12}
+        legends={[
+            {
+                dataFrom: 'keys',
+                anchor: 'bottom-right',
+                direction: 'column',
+                justify: false,
+                translateX: 120,
+                translateY: 0,
+                itemsSpacing: 2,
+                itemWidth: 100,
+                itemHeight: 20,
+                itemDirection: 'left-to-right',
+                itemOpacity: 0.85,
+                symbolSize: 20,
+                effects: [
+                    {
+                        on: 'hover',
+                        style: {
+                            itemOpacity: 1
+                        }
+                    }
+                ]
+            }
+        ]}
+        animate={true}
+        motionStiffness={90}
+        motionDamping={15}
+    />
+</div>)`
+  height: 400px;
+`
