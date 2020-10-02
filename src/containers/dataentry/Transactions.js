@@ -1,5 +1,5 @@
 import styled from "styled-components";
-import React, {createRef, useEffect, useRef, useState} from "react";
+import React, {createRef, useEffect, useLayoutEffect, useRef, useState} from "react";
 
 function usePrevious(value) {
     const ref = useRef();
@@ -24,33 +24,23 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
     const [activeCell, setActiveCell] = useState(null);
     const prev = usePrevious({changeCategoryFor, activeCell, filter});
 
-    const focusField = (field, i) => {
-        if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
-        if (field === 'comment' && commentRefs[i] && commentRefs[i].current) commentRefs[i].current.focus()
-        if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) categoryRefs[i].current.focus()
-        if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
-    }
-
     useEffect(() => {
-        console.log('TRANS MOUNT')
-    }, [])
-
-    useEffect(() => {
-        console.log('BUILDING REFS')
-        setDateRefs( createRefs1d(dateRefs, transactions.length));
-        setCommentRefs( createRefs1d(commentRefs, transactions.length));
-        setCategoryRefs( createRefs1d(categoryRefs, transactions.length));
-        setAmountRefs( createRefs1d(amountRefs, transactions.length));
+        setDateRefs( createRefs1d(dateRefs, Math.max(transactions.length, dateRefs.length)) );
+        setCommentRefs( createRefs1d(commentRefs, Math.max(transactions.length, commentRefs.length)));
+        setCategoryRefs( createRefs1d(categoryRefs, Math.max(transactions.length, categoryRefs.length)));
+        setAmountRefs( createRefs1d(amountRefs, Math.max(transactions.length, amountRefs.length)));
     }, [transactions.length]);
 
-    useEffect(() => {
-        if (filter && filter['--source']) {
+    useLayoutEffect(() => {
+        if (filter['--source']) {
             const [transaction_uuid, field] = filter['--source'].split('_')
             const index = transactions.findIndex( t => t.uuid === transaction_uuid )
             if (index >= 0) focusField(field, index)
-            else if (transactions.length > 0) focusField(field, 0)
+            else if (transactions.length > 0) {
+                focusField(field, 0)
+            }
         }
-    }, [filter, transactions])
+    }, [transactions.length])
 
     useEffect(() => {
         if (!changeCategoryFor && prev && prev.changeCategoryFor) {
@@ -63,12 +53,18 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
         }
     }, [changeCategoryFor])
 
+    const focusField = (field, i) => {
+        if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
+        if (field === 'comment' && commentRefs[i] && commentRefs[i].current) commentRefs[i].current.focus()
+        if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) { categoryRefs[i].current.focus(); console.log("FCAT")}
+        if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
+    }
+
 
     const withUuid = id => transactions.findIndex(t => t.uuid === id)
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
-            console.log('KEYDOWN ', field)
             if (!isActive(t, field)) {
                 if (e.key === 'Home' || e.key === 'end') e.preventDefault()
                 if (e.key === 'ArrowUp') focusRef1d(refArray, i-1)
@@ -92,7 +88,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
             if (e.key === 'Enter' && field === 'category' && !changeCategoryFor) {
                 setChangeCategoryFor(t.uuid)
             }
-            if (e.key === 'Escape' && filter.text) updateFilter(field, null)
+            if (e.key === 'Escape' && filter[field]) updateFilter(null, null)
         }
     }
     const onKeyDownForFilter = (field) => e => {
@@ -113,15 +109,14 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
     }
 
     const isActive = (t, field) => {
-        if (t.id === 3 && field === 'description') {
-            if (activeCell) console.log('ISACTIVE ', activeCell.t, activeCell.field, activeCell && activeCell.t === t && activeCell.field === field)
-        }
         return activeCell && activeCell.t.uuid === t.uuid && activeCell.field === field
     }
 
     const categoryCell = (t, i) => {
+        const autoFocus = false //filterSourcecField() === 'category'
         return <button id={`${t.uuid}_category`}
                        ref={categoryRefs[i]}
+                       autoFocus={i === 0 && autoFocus}
                        className={classes(['category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null])}
                        onKeyDown={onKeyDown(t, 'category', categoryRefs, i, commentRefs, amountRefs)}
                        disabled={changeCategoryFor != null}
@@ -129,19 +124,20 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
     }
 
 
-    const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}, other) =>
-        <input key={`${t.uuid}_${field}`}
-               ref={myRefs[i]}
-               id={`${t.uuid}_${field}`}
-               className={classes([field, isActive(t, field) ? 'active' : null])}
-               onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
-               readOnly={!isActive(t, field)}
-               disabled={changeCategoryFor != null}
-               type='text'
-               autoFocus={i === 0 && field === 'comment' ? true : false}
-               value={value ? value : ''}
-               onChange={e => updateTransaction(t, field, e.target.value)}
-               {...other  }/>
+    const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}, other) => {
+        return <input key={`${t.uuid}_${field}`}
+                      ref={myRefs[i]}
+                      id={`${t.uuid}_${field}`}
+                      className={classes([field, isActive(t, field) ? 'active' : null])}
+                      onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
+                      readOnly={!isActive(t, field)}
+                      disabled={changeCategoryFor != null}
+                      type='text'
+                      autoFocus={i === 0 && field === 'comment' ? true : false}
+                      value={value ? value : ''}
+                      onChange={e => updateTransaction(t, field, e.target.value)}
+                      {...other}/>
+    }
 
     const totalPlus = transactions.map(t => t.amount || 0).filter(a => a > 0).reduce((a, b) => a + b, 0)
     const totalMinus = transactions.map(t => t.amount || 0).filter(a => a < 0).reduce((a, b) => a + b, 0)

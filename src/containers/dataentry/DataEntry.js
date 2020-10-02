@@ -110,6 +110,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         }
 
         if (filteredTransactions.length === 0 && filter['--source'] && !changeCategoryFor) {
+            console.log("DE setting focus ", filter)
             const x = getFilterRef(filter['--source'].split('_')[1]); x && x.current && x.current.focus()
         }
     }, [filteredTransactions, changeCategoryFor])
@@ -124,27 +125,32 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
 
     const updateFilter = (field, value, source) => {
-        console.log("update filter ", field, " ", value)
         const x = {...filter }
-        if (value) x[field] = value
-        else delete x[field]
-        x['--source'] = source
+        if (field && value) x[field] = value
+        if (field && !value) delete x[field]
+        if (!field) Object.keys(x).filter(k => !k.startsWith('--')).forEach(k => delete x[k])
+        if (source) x['--source'] = source
         setFilter(x)
     }
 
+    const filterSource = () => (filter['--source'] && filter['--source'].split('_')) || [null, null]
+
     const onKeyDownForFilter = field => e => {
+        if (e.key === 'Escape') updateFilter(null, null)
+
+        if (filterSource()[1] !== field) return
         if (e.key === 'Backspace' && filter[field] && filter[field].length > 1 ) {
-            updateFilter(field, filter[field].substring(0, filter[field].length - 1), field)
+            updateFilter(field, filter[field].substring(0, filter[field].length - 1))
         }
         else if (e.key === 'Backspace' && filter[field] && filter[field].length > 0 ) {
-            updateFilter(field, null, field)
+            updateFilter(field, null)
         }
         if (dataEntryKeys.test(e.key)) {
             if (filter[field]) {
-                updateFilter(field, filter[field] + e.key, field)
+                updateFilter(field, filter[field] + e.key)
             }
             else {
-                updateFilter(field, e.key, field)
+                updateFilter(field, e.key)
             }
         }
     }
@@ -167,15 +173,12 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     }
     const getTransaction = uuid => transactions.find(t => t.uuid === uuid)
     const updateTransaction = (t, field,value) => {
-        console.log('update T ', t, field, value)
         const newT = {...t}
         newT[field] = value
-        console.log(newT)
         setTransactions(transactions.map(x => x.uuid === newT.uuid ? newT : x))
     }
 
     const onKeyDown = e => {
-        console.log('TOP KEYDOWN', e.getModifierState('Shift'), e.key)
         if (e.key === 'Home') {
             setPrevMonth()
             e.preventDefault()
@@ -209,6 +212,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                             <th className='day'>
                                 <input ref={dayFilterRef}
                                        readOnly={true}
+                                       disabled={filterSource()[1] !== 'day'}
                                        value={filter.day}
                                        onKeyDown={onKeyDownForFilter('day')}
                                        maxLength={1}/>
@@ -216,6 +220,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                             <th className='comment'>
                                 <input ref={commentFilterRef}
                                        readOnly={true}
+                                       disabled={filterSource()[1] !== 'comment'}
                                        value={filter.comment}
                                        onKeyDown={onKeyDownForFilter('comment')}
                                        maxLength={1}/>
@@ -223,6 +228,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                             <th className='category'>
                                 <input ref={categoryFilterRef}
                                        readOnly={true}
+                                       disabled={filterSource()[1] !== 'category'}
                                        value={filter.category}
                                        onKeyDown={onKeyDownForFilter('category')}
                                        maxLength={1}/>
@@ -230,6 +236,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                             <th className='amount'>
                                 <input ref={amountFilterRef}
                                        readOnly={true}
+                                       disabled={filterSource()[1] !== 'amount'}
                                        value={filter.amount}
                                        onKeyDown={onKeyDownForFilter('amount')}
                                        maxLength={1}/>
