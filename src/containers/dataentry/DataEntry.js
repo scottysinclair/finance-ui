@@ -26,7 +26,7 @@ const loadTransactions = (year, month) => fetch(`http://localhost:8080/transacti
         id: t.id,
         uuid: uuidv4(),
         fullDate : t.day,
-        day: t.date.substring(8,10),
+        day: t.dayInMonth,
         comment: t.comment,
         category: t.category,
         amount: t.amount
@@ -62,6 +62,7 @@ const passesFilter = (t, filter) =>  {
 
 export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const [changeCategoryFor, setChangeCategoryFor] = useState(null)
+    const [monthData, setMonthData] = useState()
     const [categories, setCategories] = useState([])
     const [transactions, setTransactions] = useState([])
     const [filteredTransactions, setFilteredTransactions] = useState([])
@@ -72,9 +73,11 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const commentFilterRef = useRef()
     const categoryFilterRef = useRef()
     const amountFilterRef = useRef()
-    const [filterChart, setFilterChart] = useState(null)
 
     useEffect(() => {
+        fetch(`http://localhost:8080/month/${2019}/${1}`)
+            .then(response => response.json())
+            .then(json => setMonthData(json))
         fetch('http://localhost:8080/categories')
             .then(response => response.json())
             .then(json => setCategories(json.categories.sort((a, b) => a.name.localeCompare( b.name))))
@@ -120,7 +123,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         if (source === 'category') return categoryFilterRef
         if (source === 'amount') return amountFilterRef
     }
-
 
     const updateFilter = (field, value, source) => {
         const x = {...filter }
@@ -189,9 +191,10 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             setShowChart(true)
             e.preventDefault()
         }
-        if (e.key === 'F1' && showChart) {
-            setShowChart(false)
+        if (e.getModifierState('Control') && e.key.toLowerCase() === 'g') {
+            setShowChart(!showChart)
             e.preventDefault()
+            e.stopPropagation()
         }
     }
 
@@ -238,19 +241,27 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     }
 
     return (
-        <DataEntrySection className={className} onKeyDown={onKeyDown}>
+        <DataEntrySection className={className} onKeyDownCapture={onKeyDown}>
             { showChart ? <>
                 { renderFilter(false)}
                 <Barchart data={categories
-                    .filter(c => c.total !== 0)
-                    .filter(c => !filterChart || c.name.toLowerCase().includes(filterChart.toLowerCase()))}/>
-            </>: (
+                    .filter(c => c.total !== 0)}/>
+            </>: (<>
             <ContentDiv>
                 { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter(true) }
 
                 <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
-            </ContentDiv>) }
+            </ContentDiv>
+            <footer>
+                <dl>
+                    <dt>Month Start</dt>
+                    <dd>{monthData && round(monthData.startingBalance)}</dd>
+                    <dt>Month End</dt>
+                    <dd>{monthData && round(transactions.map(t => t.amount).reduce((a, b) => a + b, monthData.startingBalance))}</dd>
+                </dl>
+            </footer>
+            </>) }
         </DataEntrySection>)
 })`
  header {
@@ -268,20 +279,17 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
      }
      
    }
- .infoHeader {
-/*   input {
-     display:  inline-block;
-     position: absolute;
-     width: 0;
-     height: 0
-     margin: 0;
-     padding: 0;
-     border: none;
-   } */
-  }  
+
+dt {
+     display: inline-block;
+   }
+   dt::after {
+     content: ':';
+   }
+   dd {
+     display: inline-block;
+     margin-left: 0.3rem;
+     margin-right: 3rem;
+   }   
+     
 `
-
-
-
-
-
