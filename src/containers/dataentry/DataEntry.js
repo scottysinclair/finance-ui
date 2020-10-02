@@ -90,9 +90,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     useEffect(() => {
         onChangeHeaderInfo(<>
-            <button onClick={() => setPrevMonth()}>PREV</button>
             <span>{toMonthName(currentMonth.month)} {currentMonth.year}</span>
-            <button onClick={_ => setNextMonth()}>NEXT</button>
         </>)
         loadTransactions(currentMonth.year, currentMonth.month).then(t => setTransactions(t))
     }, [currentMonth])
@@ -138,9 +136,9 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const onKeyDownForFilter = field => e => {
         if (e.key === 'Escape') updateFilter(null, null)
 
-        if (filterSource()[1] !== field) return
+        if (filterSource()[1] && filterSource()[1] !== field) return
         if (e.key === 'Backspace' && filter[field] && filter[field].length > 1 ) {
-            updateFilter(field, filter[field].substring(0, filter[field].length - 1))
+                updateFilter(field, filter[field].substring(0, filter[field].length - 1))
         }
         else if (e.key === 'Backspace' && filter[field] && filter[field].length > 0 ) {
             updateFilter(field, null)
@@ -187,63 +185,68 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             setNextMonth()
             e.preventDefault()
         }
-        if (e.key === 'F1') {
+        if (e.key === 'F2') {
             setShowChart(true)
             e.preventDefault()
         }
-        if (e.key === 'Escape' && showChart) {
+        if (e.key === 'F1' && showChart) {
             setShowChart(false)
             e.preventDefault()
         }
     }
 
+    const renderFilter = (passive) => {
+        return <header className='infoHeader'>
+            <table>
+                <tr>
+                    <th className='day'>
+                        <input ref={dayFilterRef}
+                               readOnly={true}
+                               disabled={passive && filterSource()[1] !== 'day'}
+                               value={filter.day}
+                               onKeyDown={onKeyDownForFilter('day')}
+                               maxLength={1}/>
+                    </th>
+                    <th className='comment'>
+                        <input ref={commentFilterRef}
+                               readOnly={true}
+                               autoFocus={!passive}
+                               disabled={passive && filterSource()[1] !== 'comment'}
+                               value={filter.comment}
+                               onKeyDown={onKeyDownForFilter('comment')}
+                               maxLength={1}/>
+                    </th>
+                    <th className='category'>
+                        <input ref={categoryFilterRef}
+                               readOnly={true}
+                               disabled={passive && filterSource()[1] !== 'category'}
+                               value={filter.category}
+                               onKeyDown={onKeyDownForFilter('category')}
+                               maxLength={1}/>
+                    </th>
+                    <th className='amount'>
+                        <input ref={amountFilterRef}
+                               readOnly={true}
+                               disabled={passive && filterSource()[1] !== 'amount'}
+                               value={filter.amount}
+                               onKeyDown={onKeyDownForFilter('amount')}
+                               maxLength={1}/>
+                    </th>
+                </tr>
+            </table>
+        </header>
+    }
+
     return (
         <DataEntrySection className={className} onKeyDown={onKeyDown}>
             { showChart ? <>
-                <input name='chartCategories' autoFocus={true} value={filterChart} onChange={e => setFilterChart(e.target.value)}/>
+                { renderFilter(false)}
                 <Barchart data={categories
                     .filter(c => c.total !== 0)
                     .filter(c => !filterChart || c.name.toLowerCase().includes(filterChart.toLowerCase()))}/>
             </>: (
             <ContentDiv>
-                { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && <header className='infoHeader'>
-                    <table>
-                        <tr>
-                            <th className='day'>
-                                <input ref={dayFilterRef}
-                                       readOnly={true}
-                                       disabled={filterSource()[1] !== 'day'}
-                                       value={filter.day}
-                                       onKeyDown={onKeyDownForFilter('day')}
-                                       maxLength={1}/>
-                            </th>
-                            <th className='comment'>
-                                <input ref={commentFilterRef}
-                                       readOnly={true}
-                                       disabled={filterSource()[1] !== 'comment'}
-                                       value={filter.comment}
-                                       onKeyDown={onKeyDownForFilter('comment')}
-                                       maxLength={1}/>
-                            </th>
-                            <th className='category'>
-                                <input ref={categoryFilterRef}
-                                       readOnly={true}
-                                       disabled={filterSource()[1] !== 'category'}
-                                       value={filter.category}
-                                       onKeyDown={onKeyDownForFilter('category')}
-                                       maxLength={1}/>
-                            </th>
-                            <th className='amount'>
-                                <input ref={amountFilterRef}
-                                       readOnly={true}
-                                       disabled={filterSource()[1] !== 'amount'}
-                                       value={filter.amount}
-                                       onKeyDown={onKeyDownForFilter('amount')}
-                                       maxLength={1}/>
-                            </th>
-                        </tr>
-                    </table>
-                </header>}
+                { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter(true) }
 
                 <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
