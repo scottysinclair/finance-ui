@@ -89,7 +89,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
 
     useEffect(() => {
-        console.log("Applying filter ", filter)
         setFilteredTransactions(transactions.filter(t => passesFilter(t, filter)))
     },[transactions, filter])
 
@@ -132,8 +131,9 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         if (!field) Object.keys(x).filter(k => !k.startsWith('--')).forEach(k => delete x[k])
         if (source) x['--source'] = source
         setFilter(x)
-        console.log("SETFILTER", x)
     }
+
+    const deleteTransaction = transactionUuid => setTransactions(transactions.filter(t => t.uuid != transactionUuid))
 
     const filterSource = () => (filter['--source'] && filter['--source'].split('_')) || [null, null]
 
@@ -252,7 +252,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             <ContentDiv>
                 { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter(true) }
 
-                <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
+                <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
             </ContentDiv>) }
             <footer>
