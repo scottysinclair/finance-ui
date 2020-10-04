@@ -56,7 +56,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
     const focusField = (field, i) => {
         if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
         if (field === 'comment' && commentRefs[i] && commentRefs[i].current) commentRefs[i].current.focus()
-        if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) { categoryRefs[i].current.focus(); console.log("FCAT")}
+        if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) categoryRefs[i].current.focus();
         if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
     }
 
@@ -188,7 +188,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
 
     div.tableContainer {
         overflow-y: auto; 
-        max-height: 515px;      
+        max-height: 80vh;      
     }
     
    th, td {

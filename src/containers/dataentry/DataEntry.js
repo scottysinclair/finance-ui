@@ -32,6 +32,9 @@ const loadTransactions = (year, month) => fetch(`http://localhost:8080/transacti
         amount: t.amount
     }}))
 
+const loadCurrentMonth = (year, month) => fetch(`http://localhost:8080/month/${year}/${month}`)
+     .then(response => response.json())
+
 const toMonthName = month => {
     if (month === 1) return 'January'
     if (month === 2) return 'February'
@@ -75,13 +78,12 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const amountFilterRef = useRef()
 
     useEffect(() => {
-        fetch(`http://localhost:8080/month/${2019}/${1}`)
-            .then(response => response.json())
+        fetch(loadCurrentMonth(currentMonth.year, currentMonth.month))
             .then(json => setMonthData(json))
         fetch('http://localhost:8080/categories')
             .then(response => response.json())
             .then(json => setCategories(json.categories.sort((a, b) => a.name.localeCompare( b.name))))
-            .then(_ => loadTransactions(2019, 1))
+            .then(_ => loadTransactions(currentMonth.year, currentMonth.month))
             .then(t => setTransactions(t))
     }, [])
 
@@ -96,6 +98,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             <span>{toMonthName(currentMonth.month)} {currentMonth.year}</span>
         </>)
         loadTransactions(currentMonth.year, currentMonth.month).then(t => setTransactions(t))
+        loadCurrentMonth(currentMonth.year, currentMonth.month).then(m => setMonthData(m))
     }, [currentMonth])
 
 
@@ -111,13 +114,11 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         }
 
         if (filteredTransactions.length === 0 && filter['--source'] && !changeCategoryFor) {
-            console.log("DE setting focus ", filter)
             const x = getFilterRef(filter['--source'].split('_')[1]); x && x.current && x.current.focus()
         }
     }, [filteredTransactions, changeCategoryFor])
 
     const getFilterRef = source => {
-        console.log(source)
         if (source === 'day') return dayFilterRef
         if (source === 'comment') return commentFilterRef
         if (source === 'category') return categoryFilterRef
@@ -131,6 +132,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         if (!field) Object.keys(x).filter(k => !k.startsWith('--')).forEach(k => delete x[k])
         if (source) x['--source'] = source
         setFilter(x)
+        console.log("SETFILTER", x)
     }
 
     const filterSource = () => (filter['--source'] && filter['--source'].split('_')) || [null, null]
@@ -206,7 +208,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                         <input ref={dayFilterRef}
                                readOnly={true}
                                disabled={passive && filterSource()[1] !== 'day'}
-                               value={filter.day}
+                               value={filter.day || '' }
                                onKeyDown={onKeyDownForFilter('day')}
                                maxLength={1}/>
                     </th>
@@ -215,7 +217,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                                readOnly={true}
                                autoFocus={!passive}
                                disabled={passive && filterSource()[1] !== 'comment'}
-                               value={filter.comment}
+                               value={filter.comment || '' }
                                onKeyDown={onKeyDownForFilter('comment')}
                                maxLength={1}/>
                     </th>
@@ -223,7 +225,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                         <input ref={categoryFilterRef}
                                readOnly={true}
                                disabled={passive && filterSource()[1] !== 'category'}
-                               value={filter.category}
+                               value={filter.category || '' }
                                onKeyDown={onKeyDownForFilter('category')}
                                maxLength={1}/>
                     </th>
@@ -231,7 +233,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                         <input ref={amountFilterRef}
                                readOnly={true}
                                disabled={passive && filterSource()[1] !== 'amount'}
-                               value={filter.amount}
+                               value={filter.amount || '' }
                                onKeyDown={onKeyDownForFilter('amount')}
                                maxLength={1}/>
                     </th>
@@ -242,17 +244,17 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     return (
         <DataEntrySection className={className} onKeyDownCapture={onKeyDown}>
-            { showChart ? <>
+            { showChart ? (<>
                 { renderFilter(false)}
                 <Barchart data={categories
                     .filter(c => c.total !== 0)}/>
-            </>: (<>
+            </>) : (
             <ContentDiv>
                 { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter(true) }
 
                 <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
-            </ContentDiv>
+            </ContentDiv>) }
             <footer>
                 <dl>
                     <dt>Month Start</dt>
@@ -261,8 +263,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                     <dd>{monthData && round(transactions.map(t => t.amount).reduce((a, b) => a + b, monthData.startingBalance))}</dd>
                 </dl>
             </footer>
-            </>) }
-        </DataEntrySection>)
+        </DataEntrySection> )
 })`
  header {
      position: absolute;
