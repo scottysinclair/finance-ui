@@ -18,7 +18,7 @@ const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => exi
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 
 
-export const Transactions = styled(({className, filter, updateFilter, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction}) => {
+export const Transactions = styled(({className, filter, updateFilter, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction, addTransaction}) => {
     const [dateRefs, setDateRefs] = useState([]);
     const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
@@ -78,6 +78,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
+            console.log(e.key)
             if (!isActive(t, field)) {
                 if (!deleteStarted.t) {
                     if (e.key === 'Home' || e.key === 'end') e.preventDefault()
@@ -93,6 +94,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
                     }
                     if (e.key === 'ArrowLeft') focusRef1d(leftRefArray, i)
                     if (e.key === 'ArrowRight') focusRef1d(rightRefArray, i)
+                    if (e.key === 'Insert') addTransaction(i)
                 }
                 if (e.key === 'Delete') setDeleteStarted({t, i, field})
                 onKeyDownForFilter(field)(e)
@@ -255,9 +257,10 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
      width: 4rem;
    }
    button {
+    display: inline-block;
     border: none;
     width: 100%;
-    height: 100%;
+    height: 1.4rem;
     padding: 0.25rem;
     background-color: transparent;
    }

@@ -29,7 +29,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
                 const index = indexOf(getTransaction(changeCategoryFor).category)
                 if (index >= 0) {
                     if (changeCategoryFor && selectCatRefs[0].current) selectCatRefs[index].current.focus()
-                } else if (filterText && index === -1) {
+                } else {
                     if (changeCategoryFor && selectCatRefs[0].current) selectCatRefs[0].current.focus()
                 }
             }

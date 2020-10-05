@@ -133,6 +133,16 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         setFilter(x)
     }
 
+    const addTransaction = i => {
+        const t = [...transactions]
+        t.splice(i, 0, {
+            uuid: uuidv4(),
+            comment: null,
+            category: null,
+            amount: 0
+        })
+        setTransactions(t)
+    }
     const deleteTransaction = transactionUuid => setTransactions(transactions.filter(t => t.uuid != transactionUuid))
 
     const filterSource = () => (filter['--source'] && filter['--source'].split('_')) || [null, null]
@@ -252,7 +262,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             <ContentDiv>
                 { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter(true) }
 
-                <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction}}/>
+                <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction, addTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
             </ContentDiv>) }
             <footer>
