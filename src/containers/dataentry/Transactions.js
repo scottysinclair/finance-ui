@@ -25,6 +25,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
     const [amountRefs, setAmountRefs] = useState([]);
     const [activeCell, setActiveCell] = useState(null);
     const [deleteStarted, setDeleteStarted] = useState({})
+    const [currentOp, setCurrentOp] = useState({})
     const prev = usePrevious({changeCategoryFor, activeCell, filter, deleteStarted});
 
     useEffect(() => {
@@ -35,6 +36,10 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
     }, [transactions.length]);
 
     useLayoutEffect(() => {
+        if (currentOp && currentOp.name === 'AddTransaction') {
+            focusField(currentOp.focusAfter.f, currentOp.focusAfter.i)
+            setCurrentOp(null)
+        }
         if (filter['--source']) {
             const [transaction_uuid, field] = filter['--source'].split('_')
             const index = transactions.findIndex( t => t.uuid === transaction_uuid )
@@ -94,9 +99,14 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
                     }
                     if (e.key === 'ArrowLeft') focusRef1d(leftRefArray, i)
                     if (e.key === 'ArrowRight') focusRef1d(rightRefArray, i)
-                    if (e.key === 'Insert') addTransaction(i)
+                    if (e.key === 'Insert') {
+                        setCurrentOp({
+                            name: 'AddTransaction',
+                            focusAfter: { f: field, i}})
+                        addTransaction(i)
+                    }
                 }
-                if (e.key === 'Delete') setDeleteStarted({t, i, field})
+                if (e.key === 'Delete' && !deleteStarted.t) setDeleteStarted({t, i, field})
                 onKeyDownForFilter(field)(e)
             }
             if (e.key === 'Enter' && deleteStarted.t) {

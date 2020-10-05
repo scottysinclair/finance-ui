@@ -270,6 +270,8 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                 <ol>
                     <li>Navigation: ←, ↑, →, ↓, PageUp,PageDown</li>
                     <li>Prev/Next month:  Home/End</li>
+                    <li>Insert Transaction:  Insert</li>
+                    <li>Delete Transaction:  Delete + Enter</li>
                     <li>Toggle Graph:  CTRL G</li>
                 </ol>
             </ContentDiv>) }
