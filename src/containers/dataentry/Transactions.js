@@ -13,7 +13,7 @@ const classes = (...array) => array.filter(i => i != null).reduce((a, b) => {
     return a && b ? (a + ' ' + b) : a ? a : b ? b : null;
 }, null)
 const round = n => Math.round((n + Number.EPSILON) * 100) / 100
-const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b]$");
+const dataEntryKeys = new RegExp("^[-a-zA-Z0-9! \b]$");
 const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 
@@ -157,7 +157,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
                       disabled={changeCategoryFor != null}
                       type='text'
                       autoFocus={i === 0 && field === 'comment' ? true : false}
-                      value={value ? value : ''}
+                      value={value != null ? value : ''}
                       onChange={e => updateTransaction(t, field, e.target.value)}
                       {...other}/>
     }

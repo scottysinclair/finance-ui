@@ -59,7 +59,7 @@ const passesFilter = (t, filter) =>  {
     const filterKeys = Object.keys(filter).filter(k => !k.startsWith('--'))
     return filterKeys.length === 0  ||
         filterKeys.map(k => { return { f: k, v: filter[k].toLowerCase()}})
-        .filter(pair => t[pair.f] && t[pair.f].toLowerCase().includes(pair.v))
+        .filter(pair => t[pair.f] && ('' + t[pair.f]).toLowerCase().includes(pair.v))
         .length  === filterKeys.length
 }
 
@@ -136,10 +136,13 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const addTransaction = i => {
         const t = [...transactions]
         t.splice(i, 0, {
+            id: null,
             uuid: uuidv4(),
+            fullDate: null,
+            day: null,
             comment: null,
             category: null,
-            amount: 0
+            amount: null
         })
         setTransactions(t)
     }
@@ -264,6 +267,11 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
                 <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction, addTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
+                <ol>
+                    <li>Navigation: ←, ↑, →, ↓, PageUp,PageDown</li>
+                    <li>Prev/Next month:  Home/End</li>
+                    <li>Toggle Graph:  CTRL G</li>
+                </ol>
             </ContentDiv>) }
             <footer>
                 <dl>
