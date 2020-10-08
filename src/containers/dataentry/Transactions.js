@@ -122,7 +122,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
             else if (e.key === 'Enter' && field === 'category' && !changeCategoryFor) {
                 setChangeCategoryFor(t.uuid)
             }
-            if (e.key === 'Escape' && deleteStarted) setDeleteStarted({})
+            if (e.key === 'Escape' && deleteStarted.t) setDeleteStarted({})
             else if (e.key === 'Escape' && filter[field]) updateFilter(null, null)
         }
     }
