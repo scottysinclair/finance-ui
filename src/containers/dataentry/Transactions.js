@@ -22,6 +22,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
     const [dateRefs, setDateRefs] = useState([]);
     const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
+    const [importantRefs, setImportantRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
     const [activeCell, setActiveCell] = useState(null);
     const [deleteStarted, setDeleteStarted] = useState({})
@@ -32,6 +33,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
         setDateRefs( createRefs1d(dateRefs, Math.max(transactions.length, dateRefs.length)) );
         setCommentRefs( createRefs1d(commentRefs, Math.max(transactions.length, commentRefs.length)));
         setCategoryRefs( createRefs1d(categoryRefs, Math.max(transactions.length, categoryRefs.length)));
+        setImportantRefs( createRefs1d(importantRefs, Math.max(transactions.length, importantRefs.length)));
         setAmountRefs( createRefs1d(amountRefs, Math.max(transactions.length, amountRefs.length)));
     }, [transactions.length]);
 
@@ -151,7 +153,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
                        ref={categoryRefs[i]}
                        autoFocus={i === 0 && autoFocus}
                        className={classes('category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null)}
-                       onKeyDown={onKeyDown(t, 'category', categoryRefs, i, commentRefs, amountRefs)}
+                       onKeyDown={onKeyDown(t, 'category', categoryRefs, i, commentRefs, importantRefs)}
                        disabled={changeCategoryFor != null}
                        onClick={e => e.preventDefault()}>{t.category}</button>
     }
@@ -186,6 +188,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
                     <th key='day-header'>Day</th>
                     <th key='comment-header'>Comment</th>
                     <th key='category-header'>Category</th>
+                    <th key='important-header'>Important</th>
                     <th key='amount-header'>Amount</th>
                 </tr>
                 </thead>
@@ -200,6 +203,9 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
                         </td>
                         <td key='category'>
                             {categoryCell(t, i)}
+                        </td>
+                        <td key='important'>
+                            {inputCell(t, 'important', importantRefs, i, t.important, {leftRefs: amountRefs}) }
                         </td>
                         <td key='amount'>
                             {inputCell(t, 'amount', amountRefs, i, t.amount, {leftRefs: categoryRefs}) }

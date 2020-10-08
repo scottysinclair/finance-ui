@@ -29,11 +29,12 @@ const loadTransactions = (year, month) => fetch(`http://localhost:8080/transacti
         day: t.dayInMonth,
         comment: t.comment,
         category: t.category,
+        important: t.important,
         amount: t.amount
     }}))
 
 const loadCurrentMonth = (year, month) => fetch(`http://localhost:8080/month/${year}/${month}`)
-     .then(response => response.json())
+     .then(response => response.ok && response.json())
 
 const toMonthName = month => {
     if (month === 1) return 'January'
@@ -91,6 +92,18 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     useEffect(() => {
         setFilteredTransactions(transactions.filter(t => passesFilter(t, filter)))
     },[transactions, filter])
+
+    useEffect(() => {
+        if (transactions.length === 0) {
+            commentFilterRef.current && commentFilterRef.current.focus()
+        }
+    },[transactions])
+    useEffect(() => {
+        if (showChart) {
+            commentFilterRef.current && commentFilterRef.current.focus()
+        }
+    },[showChart])
+
 
     useEffect(() => {
         onChangeHeaderInfo(<>
@@ -228,8 +241,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                     <th className='comment'>
                         <input ref={commentFilterRef}
                                readOnly={true}
-                               autoFocus={!passive}
-                               disabled={passive && filterSource()[1] !== 'comment'}
+                               disabled={passive && filterSource()[1] !== 'comment' && transactions.length > 0}
                                value={filter.comment || '' }
                                onKeyDown={onKeyDownForFilter('comment')}
                                maxLength={1}/>
