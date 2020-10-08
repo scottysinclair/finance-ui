@@ -94,7 +94,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
    margin-left: 5rem;
    div.tableContainer {
     overflow-y: auto; 
-    max-height: 80vh;
+    max-height: 75vh;
     }    
    
    header {

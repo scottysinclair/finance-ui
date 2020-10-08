@@ -205,7 +205,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
                             {categoryCell(t, i)}
                         </td>
                         <td key='important'>
-                            {inputCell(t, 'important', importantRefs, i, t.important, {leftRefs: amountRefs}) }
+                            {inputCell(t, 'important', importantRefs, i, t.important, {rightRefs: amountRefs, leftRefs: categoryRefs}) }
                         </td>
                         <td key='amount'>
                             {inputCell(t, 'amount', amountRefs, i, t.amount, {leftRefs: categoryRefs}) }
@@ -228,7 +228,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
 
     div.tableContainer {
         overflow-y: auto; 
-        max-height: 80vh;      
+        max-height: 75vh;      
     }
     
       
