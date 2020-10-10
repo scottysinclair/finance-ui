@@ -205,6 +205,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     }
     const getTransaction = uuid => transactions.find(t => t.uuid === uuid)
     const updateTransaction = (t, field,value) => {
+        console.log("UT ", t, field, value)
         const newT = {...t}
         newT[field] = value
         setTransactions(transactions.map(x => x.uuid === newT.uuid ? newT : x))

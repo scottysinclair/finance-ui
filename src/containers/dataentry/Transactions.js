@@ -141,7 +141,7 @@ export const Transactions = styled(({
                 else if (field !== 'category'){
                     if (!isActive(t, field)) setActiveCell({t, field, commit: false})
                     else {
-                        console.log("PPPPP")
+                        //console.log("PPPPP")
                         setActiveCell({t, field, commit: true})
                     }
                 }
@@ -193,9 +193,10 @@ export const Transactions = styled(({
 
 
     const inputCell = (t, field, myRefs, i, value, {rightRefs, leftRefs}, other) => {
-        return <input key={`${t.uuid}_${field}`}
+        return <InputCell key={`${t.uuid}_${field}`}
                       ref={myRefs[i]}
                       id={`${t.uuid}_${field}`}
+                      isActive={() => isActive(t, field)}
                       className={classes(field, isActive(t, field) ? 'active' : null    )}
                       onKeyDown={onKeyDown(t, field, myRefs, i, leftRefs, rightRefs)}
                       readOnly={!isActive(t, field)}
@@ -337,3 +338,33 @@ export const Transactions = styled(({
      margin-right: 3rem;
    }
 `;
+
+
+const InputCell = React.forwardRef((props, ref) => {
+
+    const { isActive, ...rest  } = props
+    const [value, setValue] = useState(props.value)
+
+    useEffect(() => {
+        setValue(props.value)
+    }, [props.value])
+
+
+    const onKeyDown = e => {
+        if (isActive() && e.key === 'Enter') {
+           props.onChange(e)
+        }
+        props.onKeyDown(e)
+    }
+
+
+
+    return <input ref={ref}
+                  type='text'
+                  {...rest}
+                  value={value != null ? value : ''}
+                  onChange={e => setValue(e.target.value)}
+                  onKeyDown={onKeyDown}
+    />
+
+})
