@@ -18,7 +18,17 @@ const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => exi
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 
 
-export const Transactions = styled(({className, filter, updateFilter, transactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction, addTransaction}) => {
+export const Transactions = styled(({
+                                        className,
+                                        filter,
+                                        updateFilter,
+                                        transactions,
+                                        changeCategoryFor,
+                                        setChangeCategoryFor,
+                                        updateTransaction,
+                                        deleteTransaction,
+                                        addTransaction,
+                                        saveTransaction}) => {
     const [dateRefs, setDateRefs] = useState([]);
     const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
@@ -64,6 +74,7 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
 
     useEffect(() => {
         if (!changeCategoryFor && prev && prev.changeCategoryFor) {
+            saveTransaction(prev.changeCategoryFor)
             if (transactions.findIndex(t => t.uuid === prev.changeCategoryFor) >= 0) {
                 focusRef1d(categoryRefs, withUuid(prev.changeCategoryFor))
             }
@@ -72,6 +83,13 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
             }
         }
     }, [changeCategoryFor])
+
+    useEffect(() => {
+        if (activeCell && activeCell.commit && activeCell.t) {
+            saveTransaction(activeCell.t.uuid)
+            setActiveCell(null)
+        }
+    }, [activeCell])
 
     const focusField = (field, i) => {
         if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
@@ -85,45 +103,60 @@ export const Transactions = styled(({className, filter, updateFilter, transactio
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
-            console.log(e.key)
-            if (!isActive(t, field)) {
-                if (!deleteStarted.t) {
-                    if (e.key === 'Home' || e.key === 'end') e.preventDefault()
-                    if (e.key === 'ArrowUp') focusRef1d(refArray, i - 1)
-                    if (e.key === 'PageUp') {
-                        focusRef1d(refArray, i - 10 > 0 ? i - 10 : 0)
-                        e.preventDefault()
-                    }
-                    if (e.key === 'ArrowDown') focusRef1d(refArray, i + 1)
-                    if (e.key === 'PageDown') {
-                        focusRef1d(refArray, i + 10 < refArray.length ? i + 10 : refArray.length - 1)
-                        e.preventDefault()
-                    }
-                    if (e.key === 'ArrowLeft') focusRef1d(leftRefArray, i)
-                    if (e.key === 'ArrowRight') focusRef1d(rightRefArray, i)
-                    if (e.key === 'Insert') {
-                        setCurrentOp({
-                            name: 'AddTransaction',
-                            focusAfter: { f: field, i}})
-                        addTransaction(i)
+            if (e.key === 'Home' || e.key === 'End')
+                if (isActive(t, field)) e.stopPropagation()
+                else e.preventDefault()
+
+            if (e.key === 'ArrowUp' && !isActive(t, field) && !deleteStarted.t)
+                focusRef1d(refArray, i - 1)
+            if (e.key === 'PageUp' && !isActive(t, field) && !deleteStarted.t) {
+                focusRef1d(refArray, i - 10 > 0 ? i - 10 : 0)
+                e.preventDefault()
+            }
+            if (e.key === 'ArrowDown' && !isActive(t, field) && !deleteStarted.t)
+                focusRef1d(refArray, i + 1)
+            if (e.key === 'PageDown'  && !isActive(t, field) && !deleteStarted.t) {
+                focusRef1d(refArray, i + 10 < refArray.length ? i + 10 : refArray.length - 1)
+                e.preventDefault()
+            }
+            if (e.key === 'ArrowLeft'  && !isActive(t, field) && !deleteStarted.t)
+                focusRef1d(leftRefArray, i)
+            if (e.key === 'ArrowRight' && !isActive(t, field) && !deleteStarted.t)
+                focusRef1d(rightRefArray, i)
+
+            if (e.key === 'Insert' && !isActive(t, field) && !deleteStarted.t) {
+                setCurrentOp({
+                    name: 'AddTransaction',
+                    focusAfter: { f: field, i}})
+                addTransaction(i)
+            }
+            if (e.key === 'Delete' &&  !isActive(t, field) && !deleteStarted.t)
+                setDeleteStarted({t, i, field})
+
+            if (e.key === 'Enter') {
+                if (deleteStarted.t) {
+                    deleteTransaction(deleteStarted.t.uuid)
+                    setDeleteStarted({})
+                }
+                else if (field !== 'category'){
+                    if (!isActive(t, field)) setActiveCell({t, field, commit: false})
+                    else {
+                        console.log("PPPPP")
+                        setActiveCell({t, field, commit: true})
                     }
                 }
-                if (e.key === 'Delete' && !deleteStarted.t) setDeleteStarted({t, i, field})
-                onKeyDownForFilter(field)(e)
+                else if (field === 'category' && !changeCategoryFor) {
+                    setChangeCategoryFor(t.uuid)
+                }
             }
-            if (e.key === 'Enter' && deleteStarted.t) {
-                deleteTransaction(deleteStarted.t.uuid)
-                setDeleteStarted({})
+
+            if (e.key === 'Escape') {
+                if (deleteStarted.t) setDeleteStarted({})
+                else if (filter[field]) updateFilter(null, null)
+                else if (isActive(t, field)) setActiveCell(null)
             }
-            else if (e.key === 'Enter' && field !== 'category') {
-                if (!isActive(t, field)) setActiveCell({t, field, ref: refArray[i]})
-                else setActiveCell(null)
-            }
-            else if (e.key === 'Enter' && field === 'category' && !changeCategoryFor) {
-                setChangeCategoryFor(t.uuid)
-            }
-            if (e.key === 'Escape' && deleteStarted.t) setDeleteStarted({})
-            else if (e.key === 'Escape' && filter[field]) updateFilter(null, null)
+
+            if (!isActive(t, field)) onKeyDownForFilter(field)(e)
         }
     }
     const onKeyDownForFilter = (field) => e => {

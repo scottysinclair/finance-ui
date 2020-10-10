@@ -19,14 +19,16 @@ const classes = array => array.filter(i => i != null).reduce((a, b) => a + ' ' +
 
 const round = n => Math.round((n + Number.EPSILON) * 100) / 100
 
-const loadTransactions = (year, month) => fetch(`http://localhost:8080/transactions/${year}/${month}`)
+const loadTransactions = (year, month) => fetch(`http://localhost:8080/transaction/${year}/${month}`)
     .then(response => response.json())
     .then(json => json.transactions.map(t =>
     { return {
         id: t.id,
         uuid: uuidv4(),
-        fullDate : t.day,
-        day: t.dayInMonth,
+        account: t.account,
+        day: t.day,
+        month: t.month,
+        year: t.year,
         comment: t.comment,
         category: t.category,
         important: t.important,
@@ -151,8 +153,10 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         t.splice(i, 0, {
             id: null,
             uuid: uuidv4(),
-            fullDate: null,
+            account: 'Bank Austria',
             day: null,
+            month: currentMonth.month,
+            year: currentMonth.year,
             comment: null,
             category: null,
             amount: null
@@ -206,7 +210,32 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         setTransactions(transactions.map(x => x.uuid === newT.uuid ? newT : x))
     }
 
-    const onKeyDown = e => {
+    const saveTransaction = (t_uuid) => {
+        const t = transactions.find(t => t.uuid === t_uuid)
+        console.log(t)
+        if (t) {
+            fetch(`http://localhost:8080/transaction`, {
+                method: 'POST',
+                headers: {'Content-Type': 'application/json'},
+                body: JSON.stringify(t)
+            })
+            .then(response => response.json())
+            .then(savedT => {
+                const result = {...t, ...savedT}
+                setTransactions(transactions.map(x => x.uuid === result.uuid ? result : x))
+            })
+        }
+    }
+
+    const onKeyDownCapture = e => {
+        if (e.getModifierState('Control') && e.key.toLowerCase() === 'g') {
+            setShowChart(!showChart)
+            e.preventDefault()
+            e.stopPropagation()
+        }
+    }
+
+    const onKeyDownBubble = e => {
         if (e.key === 'Home') {
             setPrevMonth()
             e.preventDefault()
@@ -214,15 +243,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         if (e.key === 'End') {
             setNextMonth()
             e.preventDefault()
-        }
-        if (e.key === 'F2') {
-            setShowChart(true)
-            e.preventDefault()
-        }
-        if (e.getModifierState('Control') && e.key.toLowerCase() === 'g') {
-            setShowChart(!showChart)
-            e.preventDefault()
-            e.stopPropagation()
         }
     }
 
@@ -268,7 +288,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     }
 
     return (
-        <DataEntrySection className={className} onKeyDownCapture={onKeyDown}>
+        <DataEntrySection className={className} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDownBubble}>
             { showChart ? (<>
                 { renderFilter(false)}
                 <Barchart data={categories
@@ -277,7 +297,15 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             <ContentDiv>
                 { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter(true) }
 
-                <Transactions {...{filter, updateFilter, transactions: filteredTransactions, changeCategoryFor, setChangeCategoryFor, updateTransaction, deleteTransaction, addTransaction}}/>
+                <Transactions {...{
+                    filter,
+                    updateFilter,
+                    transactions: filteredTransactions,
+                    changeCategoryFor, setChangeCategoryFor,
+                    updateTransaction,
+                    deleteTransaction,
+                    addTransaction,
+                    saveTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
                 <ol>
                     <li>Navigation: ←, ↑, →, ↓, PageUp,PageDown</li>
