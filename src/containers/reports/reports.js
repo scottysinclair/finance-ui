@@ -39,6 +39,7 @@ const MyResponsiveLine = styled(({className, data}) => <div className={className
             useUTC: false,
             precision: 'month'
         }}
+        xFormat="time:%Y-%m-%d"
         yScale={{ type: 'linear', min: 'auto', max: 'auto' }}
         curve="cardinal"
         lineWidth={4}
@@ -46,6 +47,8 @@ const MyResponsiveLine = styled(({className, data}) => <div className={className
         axisRight={null}
         axisBottom={{
             orient: 'bottom',
+            format: '%b %y',
+            tickValues: 'every month',
             tickSize: 5,
             tickPadding: 5,
             tickRotation: 90,
