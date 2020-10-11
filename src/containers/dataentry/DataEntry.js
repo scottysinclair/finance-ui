@@ -250,9 +250,9 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     const renderFilter = () => {
 
-        const causedEmptyTable = field => filteredTransactions.length === 0 && filterSource()[1] === field
+    const causedEmptyTable = field => filteredTransactions.length === 0 && filterSource()[1] === field
 
-        return <header className='dataentry'>
+    return <header className='dataentry'>
             <table>
                 <tr>
                     <th>Comment</th>

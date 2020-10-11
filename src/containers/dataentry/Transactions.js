@@ -37,7 +37,7 @@ export const Transactions = styled(({
     const [activeCell, setActiveCell] = useState(null);
     const [deleteStarted, setDeleteStarted] = useState({})
     const [currentOp, setCurrentOp] = useState({})
-    const prev = usePrevious({changeCategoryFor, activeCell, filter, deleteStarted});
+    const prev = usePrevious({changeCategoryFor, activeCell, filter});
 
     useEffect(() => {
         setDateRefs( createRefs1d(dateRefs, Math.max(transactions.length, dateRefs.length)) );
@@ -64,11 +64,12 @@ export const Transactions = styled(({
 
 
     useLayoutEffect(() =>  {
-        if (prev && prev.deleteStarted && prev.deleteStarted.t) {
-            if (prev.deleteStarted.i < transactions.length - 1)
-                focusField(prev.deleteStarted.field, prev.deleteStarted.i + 1)
+        if (deleteStarted && deleteStarted.t && deleteStarted.commit) {
+            setDeleteStarted({})
+            if (deleteStarted.i < transactions.length - 1)
+                focusField(deleteStarted.field, deleteStarted.i + 1)
             else
-                focusField(prev.deleteStarted.field, prev.deleteStarted.i - 1)
+                focusField(deleteStarted.field, deleteStarted.i - 1)
         }
     }, [deleteStarted])
 
@@ -136,12 +137,11 @@ export const Transactions = styled(({
             if (e.key === 'Enter') {
                 if (deleteStarted.t) {
                     deleteTransaction(deleteStarted.t.uuid)
-                    setDeleteStarted({})
+                    setDeleteStarted({t, i, field, commit: true})
                 }
                 else if (field !== 'category'){
                     if (!isActive(t, field)) setActiveCell({t, field, commit: false})
                     else {
-                        //console.log("PPPPP")
                         setActiveCell({t, field, commit: true})
                     }
                 }
@@ -292,6 +292,9 @@ export const Transactions = styled(({
      td { border: 2px solid red;}
      input:focus { outline: none; }
      button:focus { outline: none; }
+     input, button {
+        text-decoration: line-through;
+     }
    }
    
    input.active {
