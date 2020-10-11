@@ -44,8 +44,7 @@ function App() {
       <StyledHeader className="App-header">
             <ol>
                 <li><NavLink activeClassName='navActive' to="/enterdata">Enter Data</NavLink></li>
-                <li><NavLink activeClassName='navActive' to="/report/monthly">Monthly Report</NavLink></li>
-                <li><NavLink activeClassName='navActive' to="/report/yearly">Yearly Report</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/reports">Reports</NavLink></li>
             </ol>
             <h1>{headerInfo}</h1>
       </StyledHeader>
@@ -54,15 +53,12 @@ function App() {
             <Route exact={true} key="route-1" path='/enterdata'>
               <DataEntry onChangeHeaderInfo={(text) => setHeaderInfo(text)}/>
             </Route>
-              <Route exact={true} key="route-2" path='/report/monthly'>
-                  <div>TODO: Monthly</div>
-              </Route>
-              <Route exact={true} key="route-2" path='/report/yearly'>
-                  <div>TODO: Yearly</div>
-              </Route>
-              <Route>
-                  <Redirect to='enterdata'/>
-              </Route>
+            <Route exact={true} key="route-2" path='/reports'>
+                <div>TODO: Yearly</div>
+            </Route>
+            <Route>
+                <Redirect to='enterdata'/>
+            </Route>
           </Switch>
       </StyledMain>
     </Router>

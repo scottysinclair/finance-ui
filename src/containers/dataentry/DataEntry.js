@@ -5,7 +5,7 @@ import FocusTrap from 'focus-trap-react';
 import {ResponsiveBar} from "nivo";
 import {Transactions} from "./Transactions";
 import {Categories} from "./Categories";
-import {Barchart} from "./Barchart";
+import {CategoryBarchart} from "./CategoryBarchart";
 
 
 const DataEntrySection = styled.section`  
@@ -252,7 +252,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
         const causedEmptyTable = field => filteredTransactions.length === 0 && filterSource()[1] === field
 
-        return <header className='infoHeader'>
+        return <header className='dataentry'>
             <table>
                 <tr>
                     <th>Comment</th>
@@ -284,7 +284,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         <DataEntrySection className={className} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDownBubble}>
             { showChart ? (<>
                 { renderFilter()}
-                <Barchart data={categories
+                <CategoryBarchart data={categories
                     .filter(c => c.total !== 0)}/>
             </>) : (
             <ContentDiv>
@@ -318,7 +318,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             </footer>
         </DataEntrySection> )
 })`
- header {
+ header.dataentry {
      position: absolute;
      left: 4rem;
      top: 4rem;

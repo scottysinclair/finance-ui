@@ -3,7 +3,7 @@ import {ResponsiveBar} from "nivo";
 import React from "react";
 
 
-export const Barchart = styled(({className, data}) => <div className={className}>
+export const CategoryBarchart = styled(({className, data}) => <div className={className}>
     <ResponsiveBar
         data={data}
         layout='horizontal'
