@@ -9,7 +9,8 @@ import {Barchart} from "./Barchart";
 
 
 const DataEntrySection = styled.section`  
-`;
+  padding-top: 3rem;
+  padding-left: 4rem;`;
 
 const ContentDiv = styled.div`
     display: flex;
@@ -247,42 +248,33 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         }
     }
 
-    const renderFilter = (passive) => {
+    const renderFilter = () => {
+
+        const causedEmptyTable = field => filteredTransactions.length === 0 && filterSource()[1] === field
+
         return <header className='infoHeader'>
             <table>
                 <tr>
-                    <th className='day'>
-                        <input ref={dayFilterRef}
-                               readOnly={true}
-                               disabled={passive && filterSource()[1] !== 'day'}
-                               value={filter.day || '' }
-                               onKeyDown={onKeyDownForFilter('day')}
-                               maxLength={1}/>
-                    </th>
-                    <th className='comment'>
+                    <th>Comment</th>
+                    <td className='comment'>
                         <input ref={commentFilterRef}
                                readOnly={true}
-                               disabled={passive && filterSource()[1] !== 'comment' && transactions.length > 0}
+                               disabled={!showChart && !causedEmptyTable('comment')}
                                value={filter.comment || '' }
                                onKeyDown={onKeyDownForFilter('comment')}
                                maxLength={1}/>
-                    </th>
-                    <th className='category'>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Category</th>
+                    <td className='category'>
                         <input ref={categoryFilterRef}
                                readOnly={true}
-                               disabled={passive && filterSource()[1] !== 'category'}
+                               disabled={!showChart && !causedEmptyTable('category')}
                                value={filter.category || '' }
                                onKeyDown={onKeyDownForFilter('category')}
                                maxLength={1}/>
-                    </th>
-                    <th className='amount'>
-                        <input ref={amountFilterRef}
-                               readOnly={true}
-                               disabled={passive && filterSource()[1] !== 'amount'}
-                               value={filter.amount || '' }
-                               onKeyDown={onKeyDownForFilter('amount')}
-                               maxLength={1}/>
-                    </th>
+                    </td>
                 </tr>
             </table>
         </header>
@@ -291,12 +283,12 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     return (
         <DataEntrySection className={className} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDownBubble}>
             { showChart ? (<>
-                { renderFilter(false)}
+                { renderFilter()}
                 <Barchart data={categories
                     .filter(c => c.total !== 0)}/>
             </>) : (
             <ContentDiv>
-                { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter(true) }
+                { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter() }
 
                 <Transactions {...{
                     filter,
@@ -338,6 +330,8 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
      th {
        padding-top: 0.3rem;
        width: 3rem;
+       font-weight: normal;
+       padding-right: 2rem;
      }
      
    }

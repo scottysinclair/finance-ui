@@ -33,8 +33,6 @@ const StyledHeader = styled.header`
 `;
 
 const StyledMain = styled.main`
-  padding-top: 3rem;
-  padding-left: 4rem;
 `;
 
 function App() {

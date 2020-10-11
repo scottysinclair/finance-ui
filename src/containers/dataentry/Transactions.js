@@ -259,13 +259,13 @@ export const Transactions = styled(({
     </div>})`
     
   position: relative;
+  padding-top: 2rem;
 
     div.tableContainer {
         overflow-y: auto; 
         max-height: 75vh;      
     }
     
-      
    th, td {
       text-align: left;
       border: 1px solid #ccc;

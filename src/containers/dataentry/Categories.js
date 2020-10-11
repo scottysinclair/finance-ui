@@ -91,7 +91,9 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
         </div>
     </FocusTrap>})` 
    position: relative; 
+   padding-top: 2rem;
    margin-left: 5rem;
+   
    div.tableContainer {
     overflow-y: auto; 
     max-height: 75vh;
