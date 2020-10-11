@@ -3,6 +3,7 @@ import {BrowserRouter as Router, NavLink, Route, Switch, Redirect} from 'react-r
 import './App.css';
 import {DataEntry} from "./containers/dataentry/DataEntry";
 import styled from 'styled-components'
+import {Reports} from "./containers/reports/reports";
 
 const StyledHeader = styled.header`
     display: flex;
@@ -54,7 +55,7 @@ function App() {
               <DataEntry onChangeHeaderInfo={(text) => setHeaderInfo(text)}/>
             </Route>
             <Route exact={true} key="route-2" path='/reports'>
-                <div>TODO: Yearly</div>
+                <Reports/>
             </Route>
             <Route>
                 <Redirect to='enterdata'/>

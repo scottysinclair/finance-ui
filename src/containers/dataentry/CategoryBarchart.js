@@ -1,6 +1,7 @@
 import styled from "styled-components";
-import {ResponsiveBar} from "nivo";
+
 import React from "react";
+import {ResponsiveBar} from "@nivo/bar";
 
 
 export const CategoryBarchart = styled(({className, data}) => <div className={className}>

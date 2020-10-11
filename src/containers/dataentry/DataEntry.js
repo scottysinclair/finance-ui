@@ -1,8 +1,6 @@
 import React, {createRef, useEffect, useLayoutEffect, useRef, useState} from 'react';
 import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid';
-import FocusTrap from 'focus-trap-react';
-import {ResponsiveBar} from "nivo";
 import {Transactions} from "./Transactions";
 import {Categories} from "./Categories";
 import {CategoryBarchart} from "./CategoryBarchart";
