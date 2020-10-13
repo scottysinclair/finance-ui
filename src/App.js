@@ -54,7 +54,7 @@ function App() {
             <Route exact={true} key="route-1" path='/enterdata'>
               <DataEntry onChangeHeaderInfo={(text) => setHeaderInfo(text)}/>
             </Route>
-            <Route exact={true} key="route-2" path='/reports'>
+            <Route exact={false} key="route-2" path='/reports'>
                 <Reports/>
             </Route>
             <Route>
