@@ -14,6 +14,19 @@ const ContentDiv = styled.div`
     display: flex;
 `;
 
+const HelpContainer = styled.aside`  
+    position: absolute;
+    background: white;
+    border: 2px solid black;
+    z-index: 2;
+    ol {
+        list-style-type: none;
+        li {
+            padding: 1rem 2rem 1rem 2rem;
+        }
+     }
+`;
+
 const classes = array => array.filter(i => i != null).reduce((a, b) => a + ' ' + b)
 
 const round = n => Math.round((n + Number.EPSILON) * 100) / 100
@@ -73,6 +86,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const [filteredTransactions, setFilteredTransactions] = useState([])
     const [currentMonth, setCurrentMonth] = useState({ month: 1, year: 2019})
     const [showChart, setShowChart] = useState(false)
+    const [showHelp, setShowHelp] = useState(false)
     const [filter, setFilter] = useState({})
     const dayFilterRef = useRef()
     const commentFilterRef = useRef()
@@ -89,7 +103,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             .then(t => setTransactions(t))
     }, [])
 
-
     useEffect(() => {
         setFilteredTransactions(transactions.filter(t => passesFilter(t, filter)))
     },[transactions, filter])
@@ -98,7 +111,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         if (transactions.length === 0) {
             commentFilterRef.current && commentFilterRef.current.focus()
         }
-    },[transactions])
+    },[transactions.length])
     useEffect(() => {
         if (showChart) {
             commentFilterRef.current && commentFilterRef.current.focus()
@@ -233,6 +246,16 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             e.preventDefault()
             e.stopPropagation()
         }
+        if (e.getModifierState('Control') && e.key.toLowerCase() === 'h') {
+            setShowHelp(!showHelp)
+            e.preventDefault()
+            e.stopPropagation()
+        }
+        if (e.key ==='Escape' && showHelp) {
+            setShowHelp(false)
+            e.preventDefault()
+            e.stopPropagation()
+        }
     }
 
     const onKeyDownBubble = e => {
@@ -280,6 +303,17 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     return (
         <DataEntrySection className={className} onKeyDownCapture={onKeyDownCapture} onKeyDown={onKeyDownBubble}>
+            {showHelp &&
+            <HelpContainer className={className}>
+                <h2>HELP</h2>
+                <ol>
+                    <li>Navigation: ←, ↑, →, ↓, PageUp,PageDown</li>
+                    <li>Prev/Next month:  Home/End</li>
+                    <li>Insert Transaction:  Insert</li>
+                    <li>Delete Transaction:  Delete + Enter</li>
+                    <li>Toggle Graph:  CTRL G</li>
+                </ol>
+            </HelpContainer>}
             { showChart ? (<>
                 { renderFilter()}
                 <CategoryBarchart data={categories
@@ -298,13 +332,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                     addTransaction,
                     saveTransaction}}/>
                 <Categories {...{categories,  changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}}/>
-                <ol>
-                    <li>Navigation: ←, ↑, →, ↓, PageUp,PageDown</li>
-                    <li>Prev/Next month:  Home/End</li>
-                    <li>Insert Transaction:  Insert</li>
-                    <li>Delete Transaction:  Delete + Enter</li>
-                    <li>Toggle Graph:  CTRL G</li>
-                </ol>
             </ContentDiv>) }
             <footer>
                 <dl>

@@ -6,40 +6,58 @@ import {ResponsiveLine} from "@nivo/line";
 export const CategoriesReport = props => {
 
     const [filter, setFilter] = useState(null)
+    const [comment, setComment] = useState(null)
     const [total, setTotal] = useState(0)
     const [min, setMin] = useState(1)
     const [data, setData] = useState(null)
     const [filteredData, setFilteredData] = useState(null)
 
     useEffect(() =>{
-        fetch(`http://localhost:8080/timeseries/categories`)
-            .then(response => response.json())
-            .then(json => json.data.map(d =>{ return {
-                id: d.id,
-                data: d.data.map(v => {
-                     return {
-                        x: v.date,
-                        y: v.amount,
-                    }})
-                }}))
-            .then(data => {
-                setData(data)
-            })
+        loadData()
     }, [])
+
+    useEffect(() =>{
+        loadData()
+    }, [comment])
+
 
     useEffect(() => {
         setFilteredData(data ? filterData(data) : null)
     }, [data, filter, total, min])
 
+
+    const loadData = _ => {
+        var url = 'http://localhost:8080/timeseries/categories'
+        if (comment) {
+            url += `?comment=${comment}`
+        }
+        return fetch(url)
+            .then(response => response.json())
+            .then(json => json.data.map(d =>{ return {
+                id: d.id,
+                data: d.data.map(v => {
+                    return {
+                        x: v.date,
+                        y: v.amount,
+                    }})
+            }}))
+            .then(data => {
+                setData(data)
+            })
+    }
+
     const filterData = data => data
         .filter(d => !filter || d.id.toLowerCase().includes(filter))
-        .filter(d => Math.abs(d.data.map(z => z.y).reduce((a,b) => a+b, 0)) >= total)
-        .filter(d => Math.abs(d.data.map(z => z.y).reduce((a,b) => a > b ? a : b, 0)) >= min)
+        .filter(d => isNaN(total) || Math.abs(d.data.map(z => z.y).reduce((a,b) => a+b, 0)) >= total)
+        .filter(d => isNaN(min) || d.data.map(z => z.y).reduce((a,b) => {
+            const [aa, ab] = [Math.abs(a), Math.abs(b)]
+            return aa > ab  ? aa : ab }, 0) >= min)
 
     return (<div>
-        Category: <input name='category' value={filter} onChange={e => setFilter(e.target.value.toLowerCase())}/>
-        Total Over Period: <input name='total' value={total} onChange={e => e.target.value  && setTotal(parseInt(e.target.value))}/>
-        Min Every Month: <input name='min' value={min} onChange={e => e.target.value  && setMin(parseInt(e.target.value))}/>
+        Comment: <input name='comment' value={comment} onChange={e => setComment(e.target.value)}/>
+        Category: <input name='category' value={filter} onChange={e => setFilter(e.target.value)}/>
+        Total Over Period: <input name='total' value={total || ''} onChange={e => setTotal(parseInt(e.target.value)) }/>
+        Can Exceed: <input name='min' value={min || ''} onChange={e =>  setMin(parseInt(e.target.value)) }/>
         {filteredData ? filteredData.length : 0 } Categories
         { filteredData  && <MyResponsiveLine data={filteredData}/> }
     </div>)
