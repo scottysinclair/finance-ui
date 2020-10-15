@@ -5,7 +5,7 @@ import {ResponsiveLine} from "@nivo/line";
 
 export const CategoriesReport = props => {
 
-    const [filter, setFilter] = useState(null)
+    const [category, setCategory] = useState(null)
     const [comment, setComment] = useState(null)
     const [total, setTotal] = useState(0)
     const [min, setMin] = useState(1)
@@ -23,7 +23,7 @@ export const CategoriesReport = props => {
 
     useEffect(() => {
         setFilteredData(data ? filterData(data) : null)
-    }, [data, filter, total, min])
+    }, [data, category, total, min])
 
 
     const loadData = _ => {
@@ -47,15 +47,25 @@ export const CategoriesReport = props => {
     }
 
     const filterData = data => data
-        .filter(d => !filter || d.id.toLowerCase().includes(filter))
+        .filter(d => !category || d.id.toLowerCase().includes(category))
         .filter(d => isNaN(total) || Math.abs(d.data.map(z => z.y).reduce((a,b) => a+b, 0)) >= total)
         .filter(d => isNaN(min) || d.data.map(z => z.y).reduce((a,b) => {
             const [aa, ab] = [Math.abs(a), Math.abs(b)]
             return aa > ab  ? aa : ab }, 0) >= min)
 
-    return (<div>
-        Comment: <input name='comment' value={comment} onChange={e => setComment(e.target.value)}/>
-        Category: <input name='category' value={filter} onChange={e => setFilter(e.target.value)}/>
+
+    const onKeyDownCapture = e => {
+        if (e.key === 'Escape') {
+            setComment(null)
+            setCategory(null)
+            setTotal(0)
+            setMin(1)
+        }
+    }
+
+    return (<div onKeyDownCapture={onKeyDownCapture}>
+        Comment: <input name='comment' value={comment || ''} onChange={e => setComment(e.target.value)}/>
+        Category: <input name='category' value={category || ''} onChange={e => setCategory(e.target.value)}/>
         Total Over Period: <input name='total' value={total || ''} onChange={e => setTotal(parseInt(e.target.value)) }/>
         Can Exceed: <input name='min' value={min || ''} onChange={e =>  setMin(parseInt(e.target.value)) }/>
         {filteredData ? filteredData.length : 0 } Categories

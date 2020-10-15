@@ -142,6 +142,9 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         if (filteredTransactions.length === 0 && filter['--source'] && !changeCategoryFor) {
             const x = getFilterRef(filter['--source'].split('_')[1]); x && x.current && x.current.focus()
         }
+        else if (filteredTransactions.length === 0 && !filter['--source']) {
+            const x = getFilterRef('comment'); x && x.current && x.current.focus()
+        }
     }, [filteredTransactions, changeCategoryFor])
 
     const getFilterRef = source => {
@@ -272,6 +275,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const renderFilter = () => {
 
     const causedEmptyTable = field => filteredTransactions.length === 0 && filterSource()[1] === field
+    const causedEmptyTableOrNoData = field => causedEmptyTable(field) || transactions.length === 0
 
     return <header className='dataentry'>
             <table>
@@ -280,7 +284,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                     <td className='comment'>
                         <input ref={commentFilterRef}
                                readOnly={true}
-                               disabled={!showChart && !causedEmptyTable('comment')}
+                               disabled={!showChart && !causedEmptyTableOrNoData('comment')}
                                value={filter.comment || '' }
                                onKeyDown={onKeyDownForFilter('comment')}
                                maxLength={1}/>

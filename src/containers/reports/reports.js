@@ -47,7 +47,7 @@ export const Reports = props => {
             <ol>
                 <li><NavLink to='/reports/timeline'>Timeline</NavLink></li>
                 { years && <ol>Year
-                    { years.map(y => <li><NavLink to={`/reports/year/${y}`}>{y}</NavLink></li>) }
+                    { years.map(y => <li key={y}><NavLink to={`/reports/year/${y}`}>{y}</NavLink></li>) }
                 </ol> }
             </ol>
         </ReportsNav>
