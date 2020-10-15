@@ -103,5 +103,5 @@ const MyResponsiveLine = styled(({className, data}) => <div className={className
     />
 </div>)`
   height: 85vh;
-  width: 85vw;
+  width: 95%;
 `
