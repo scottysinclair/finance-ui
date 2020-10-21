@@ -30,6 +30,7 @@ export const Transactions = styled(({
                                         addTransaction,
                                         saveTransaction}) => {
     const [dateRefs, setDateRefs] = useState([]);
+    const [descriptionRefs, setDescriptionRefs] = useState([]);
     const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
     const [importantRefs, setImportantRefs] = useState([]);
@@ -41,6 +42,7 @@ export const Transactions = styled(({
 
     useEffect(() => {
         setDateRefs( createRefs1d(dateRefs, Math.max(transactions.length, dateRefs.length)) );
+        setDescriptionRefs( createRefs1d(descriptionRefs, Math.max(transactions.length, descriptionRefs.length)) );
         setCommentRefs( createRefs1d(commentRefs, Math.max(transactions.length, commentRefs.length)));
         setCategoryRefs( createRefs1d(categoryRefs, Math.max(transactions.length, categoryRefs.length)));
         setImportantRefs( createRefs1d(importantRefs, Math.max(transactions.length, importantRefs.length)));
@@ -94,6 +96,7 @@ export const Transactions = styled(({
 
     const focusField = (field, i) => {
         if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
+        if (field === 'description' && descriptionRefs[i] && descriptionRefs[i].current) descriptionRefs[i].current.focus()
         if (field === 'comment' && commentRefs[i] && commentRefs[i].current) commentRefs[i].current.focus()
         if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) categoryRefs[i].current.focus();
         if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
@@ -220,6 +223,7 @@ export const Transactions = styled(({
                 <thead>
                 <tr>
                     <th key='day-header'>Day</th>
+                    <th key='description-header'>Description</th>
                     <th key='comment-header'>Comment</th>
                     <th key='category-header'>Category</th>
                     <th key='important-header'>Important</th>
@@ -232,8 +236,11 @@ export const Transactions = styled(({
                         <td key='day'>
                             {inputCell(t, 'day', dateRefs, i, t.day, {rightRefs: commentRefs}, {maxLength: 2}) }
                         </td>
+                        <td key='content'>
+                            {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: commentRefs}) }
+                        </td>
                         <td key='comment'>
-                            {inputCell(t, 'comment', commentRefs, i, t.comment, {leftRefs: dateRefs, rightRefs: categoryRefs}) }
+                            {inputCell(t, 'comment', commentRefs, i, t.comment, {leftRefs: descriptionRefs, rightRefs: categoryRefs}) }
                         </td>
                         <td key='category'>
                             {categoryCell(t, i)}
@@ -303,8 +310,11 @@ export const Transactions = styled(({
    input.day {
      width: 3rem;
    }
-   input.comment {
+   input.description {
      width: 30rem;
+   }
+   input.comment {
+     width: 10rem;
    }
    input.amount {
      width: 4rem;

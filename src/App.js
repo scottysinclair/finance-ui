@@ -4,6 +4,7 @@ import './App.css';
 import {DataEntry} from "./containers/dataentry/DataEntry";
 import styled from 'styled-components'
 import {Reports} from "./containers/reports/reports";
+import {Upload} from "./containers/upload/upload";
 
 const StyledHeader = styled.header`
     display: flex;
@@ -44,18 +45,22 @@ function App() {
     <Router>
       <StyledHeader className="App-header">
             <ol>
-                <li><NavLink activeClassName='navActive' to="/enterdata">Enter Data</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/upload">Upload</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/month">Monthly</NavLink></li>
                 <li><NavLink activeClassName='navActive' to="/reports">Reports</NavLink></li>
             </ol>
             <h1>{headerInfo}</h1>
       </StyledHeader>
       <StyledMain>
           <Switch>
-            <Route exact={true} key="route-1" path='/enterdata'>
+            <Route exact={true} key="route-1" path='/month'>
               <DataEntry onChangeHeaderInfo={(text) => setHeaderInfo(text)}/>
             </Route>
             <Route exact={false} key="route-2" path='/reports'>
                 <Reports/>
+            </Route>
+            <Route exact={false} key="route-3" path='/upload'>
+                <Upload/>
             </Route>
             <Route>
                 <Redirect to='enterdata'/>

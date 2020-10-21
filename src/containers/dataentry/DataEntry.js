@@ -37,6 +37,7 @@ const loadTransactions = (year, month) => fetch(`http://localhost:8080/transacti
     { return {
         id: t.id,
         uuid: uuidv4(),
+        description: t.description,
         account: t.account,
         day: t.day,
         month: t.month,
@@ -84,11 +85,12 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const [categories, setCategories] = useState([])
     const [transactions, setTransactions] = useState([])
     const [filteredTransactions, setFilteredTransactions] = useState([])
-    const [currentMonth, setCurrentMonth] = useState({ month: 1, year: 2019})
+    const [currentMonth, setCurrentMonth] = useState({ month: 10, year: 2020})
     const [showChart, setShowChart] = useState(false)
     const [showHelp, setShowHelp] = useState(false)
     const [filter, setFilter] = useState({})
     const dayFilterRef = useRef()
+    const descriptionFilterRef = useRef()
     const commentFilterRef = useRef()
     const categoryFilterRef = useRef()
     const amountFilterRef = useRef()
@@ -149,6 +151,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     const getFilterRef = source => {
         if (source === 'day') return dayFilterRef
+        if (source === 'description') return descriptionFilterRef
         if (source === 'comment') return commentFilterRef
         if (source === 'category') return categoryFilterRef
         if (source === 'amount') return amountFilterRef
@@ -262,11 +265,11 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     }
 
     const onKeyDownBubble = e => {
-        if (e.key === 'Home') {
+        if (e.key === 'End') {
             setPrevMonth()
             e.preventDefault()
         }
-        if (e.key === 'End') {
+        if (e.key === 'Home') {
             setNextMonth()
             e.preventDefault()
         }
@@ -279,6 +282,17 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     return <header className='dataentry'>
             <table>
+                <tr>
+                    <th>Description</th>
+                    <td className='description'>
+                        <input ref={descriptionFilterRef}
+                               readOnly={true}
+                               disabled={!showChart && !causedEmptyTableOrNoData('description')}
+                               value={filter.description || '' }
+                               onKeyDown={onKeyDownForFilter('description')}
+                               maxLength={1}/>
+                    </td>
+                </tr>
                 <tr>
                     <th>Comment</th>
                     <td className='comment'>
