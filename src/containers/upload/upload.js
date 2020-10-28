@@ -14,11 +14,6 @@ export const Upload = props => {
 
     const [categories, dispatch] = useReducer(categoriesReducer, []);
 
-
-    const [newCategoryName, setNewCategoryName] = useState([])
-    const [newCategoryMatcher, setNewCategoryMatcher] = useState({})
-
-
     useEffect(() => {
         loadAccounts()
         loadFeeds()
@@ -30,6 +25,8 @@ export const Upload = props => {
         switch (action.type) {
             case 'add-category':
                 return [...state, { id: uuidv4(), name: null, matchers: []}]
+            case 'remove-category':
+                return state.filter(c => c.id !== action.categoryId)
             case 'update-category-name':
                 return state.map(c => c.id === action.categoryId ? {
                     ...c,
@@ -81,6 +78,13 @@ export const Upload = props => {
     const deleteImport = (feedId) => fetch(`http://localhost:8080/feed/${feedId}`, { method: 'DELETE' })
         .then(response => response.ok && loadAccounts() && loadFeeds() && loadStatements())
 
+    const saveCategories = () => fetch(`http://localhost:8080/category`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(categories)})
+        .then(response => loadCategories())
+
+
 
     const upload = (account) => {
         const formData = new FormData()
@@ -130,7 +134,9 @@ export const Upload = props => {
             <h2>Categories</h2>
             <ul>
                 { categories && categories.map(c => (<>
-                    <li><input name={`category-${c.id}`} value={c.name} onChange={e => dispatch({type: 'update-category-name', categoryId: c.id, name: e.target.value})}/></li>
+                    <li><input name={`category-${c.id}`} value={c.name} onChange={e => dispatch({type: 'update-category-name', categoryId: c.id, name: e.target.value})}/>
+                        <button onClick={() => dispatch({type: 'remove-category', categoryId: c.id})}>X</button>
+                    </li>
                     <ul>
                         { c.matchers && c.matchers.map(m => <li><input name={m.id} value={m.pattern} onChange={e => dispatch({type: 'update-matcher', categoryId: c.id, matcherId: m.id, pattern: e.target.value})}/>
                         <button onClick={() => dispatch({type: 'remove-matcher', categoryId: c.id, matcherId: m.id})}>X</button>
@@ -139,6 +145,7 @@ export const Upload = props => {
                         </ul></>))}
                 <li><button onClick={_ => dispatch({type: 'add-category'})}>Add</button></li>
             </ul>
+            <button onClick={saveCategories}>Save</button>
         </section>
     </div>)
 }

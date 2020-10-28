@@ -6,6 +6,7 @@ import {ResponsiveLine} from "@nivo/line";
 export const CategoriesReport = props => {
 
     const [category, setCategory] = useState(null)
+    const [description, setDescription] = useState(null)
     const [comment, setComment] = useState(null)
     const [total, setTotal] = useState(0)
     const [min, setMin] = useState(1)
@@ -18,7 +19,7 @@ export const CategoriesReport = props => {
 
     useEffect(() =>{
         loadData()
-    }, [comment])
+    }, [comment, description])
 
 
     useEffect(() => {
@@ -30,7 +31,14 @@ export const CategoriesReport = props => {
         var url = 'http://localhost:8080/timeseries/categories'
         if (comment) {
             url += `?comment=${comment}`
+            if (description) {
+                url += `&description=${description}`
+            }
         }
+        else if (description) {
+            url += `?description=${description}`
+        }
+
         return fetch(url)
             .then(response => response.json())
             .then(json => json.data.map(d =>{ return {
@@ -56,6 +64,7 @@ export const CategoriesReport = props => {
 
     const onKeyDownCapture = e => {
         if (e.key === 'Escape') {
+            setDescription(null)
             setComment(null)
             setCategory(null)
             setTotal(0)
@@ -64,6 +73,7 @@ export const CategoriesReport = props => {
     }
 
     return (<div onKeyDownCapture={onKeyDownCapture}>
+        Description: <input name='description' value={description || ''} onChange={e => setDescription(e.target.value)}/>
         Comment: <input name='comment' value={comment || ''} onChange={e => setComment(e.target.value)}/>
         Category: <input name='category' value={category || ''} onChange={e => setCategory(e.target.value)}/>
         Total Over Period: <input name='total' value={total || ''} onChange={e => setTotal(parseInt(e.target.value)) }/>
