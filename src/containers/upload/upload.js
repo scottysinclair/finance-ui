@@ -1,8 +1,11 @@
 import React, {useEffect, useReducer, useState} from 'react';
+import styled from "styled-components";
 import {v4 as uuidv4} from "uuid";
 import {formatDDMMYYYY, formatHHMM} from "../util";
+import {testdups} from "./testdups";
 
-export const Upload = props => {
+
+export const Upload = styled(({className}) => {
 
     const [accounts, setAccounts] = useState([])
     const [feeds, setFeeds] = useState([])
@@ -11,8 +14,10 @@ export const Upload = props => {
     const [uploadToAccount, setUploadToAccount] = useState(null)
     const [currentBalance, setCurrentBalance] = useState(null)
     const [file, setFile] = useState(null)
+    const [dupsForFeed, setDupsForFeed] = useState(null)
+    const [dups, dispatchDups] = useReducer(dupsReducer, [])
 
-    const [categories, dispatch] = useReducer(categoriesReducer, []);
+    const [categories, dispatchCat] = useReducer(categoriesReducer, []);
 
     useEffect(() => {
         loadAccounts()
@@ -20,6 +25,31 @@ export const Upload = props => {
         loadStatements()
         loadCategories()
     }, [])
+
+    function dupsReducer(state, action) {
+        console.log(action)
+        switch (action.type) {
+            case 'set-dups':
+                return action.duplicates;
+            case 'change-dup':
+                const v = Object.assign({}, state);
+                v[action.hash] = state[action.hash].map(d => {
+                    return  d.recordNumber === action.recordNumber ? {...d, duplicate: !d.duplicate} : d;
+                })
+                return v;
+            case 'make-assumptions':
+                Object.keys(state).forEach(k => {
+                    if (state[k].length === 1) state[k][0].duplicate = true
+                    else {
+                        state[k][0].duplicate = false
+                        state[k].slice(1).forEach(d => {
+                            d.duplicate = true
+                        })
+                    }
+                })
+                return { ...state }
+        }
+    }
 
     function categoriesReducer(state, action) {
         switch (action.type) {
@@ -67,7 +97,7 @@ export const Upload = props => {
 
     const loadCategories = () => fetch(`http://localhost:8080/category`)
         .then(response => response.json())
-        .then(json => dispatch({type: 'load', categories: json.categories}))
+        .then(json => dispatchCat({type: 'load', categories: json.categories}))
 
     const addAccount = () => fetch(`http://localhost:8080/account/${newAccountName}`, { method: 'PUT' })
         .then(response => response.ok && loadAccounts())
@@ -78,12 +108,25 @@ export const Upload = props => {
     const deleteImport = (feedId) => fetch(`http://localhost:8080/feed/${feedId}`, { method: 'DELETE' })
         .then(response => response.ok && loadAccounts() && loadFeeds() && loadStatements())
 
+    const duplicateCheck = (feedId) => fetch(`http://localhost:8080/duplicateCheck/${feedId}`, { method: 'GET' })
+        .then(response => response.ok && response.json())
+        .then(json => {
+            setDupsForFeed(feedId)
+            dispatchDups({type: 'set-dups', duplicates: groupByHash(json.duplicates)})
+        })
+
     const saveCategories = () => fetch(`http://localhost:8080/category`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(categories)})
         .then(response => loadCategories())
 
+    const saveDuplicates = () => fetch(`http://localhost:8080/duplicates/${dupsForFeed}`, {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify(dups)})
+        .then(response => response.ok && response.json())
+        .then(json => dispatchDups({type: 'set-dups', duplicates: groupByHash(json.duplicates)}))
 
 
     const upload = (account) => {
@@ -94,10 +137,36 @@ export const Upload = props => {
         fetch(`http://localhost:8080/upload/${account.name}`,{
             method: 'POST',
             body: formData
-        }).then(response => {loadAccounts(); loadFeeds(); loadStatements()})
+        }).then(response => response.json())
+        .then(response => {
+            if (!response.error) {
+                setDupsForFeed(response.feedId)
+                dispatchDups({type: 'set-dups', duplicates: groupByHash(response.duplicates)})
+                loadAccounts();
+                loadFeeds();
+                setDupsForFeed(feeds.filter(f => f.file === file.name).first)
+                loadStatements()
+            }
+        })
+    }
+    const groupByHash = duplicates => {
+        const result = {}
+        duplicates.forEach(d => result[d.contentHash] ? result[d.contentHash].push(d) : result[d.contentHash] = [d])
+        return result
     }
 
-    return (<div>
+    const setDuplicateAssumption = dup => {
+        if (dup.length === 1) dup[0].duplicate = true
+        else {
+            dup[0].duplicate = false
+            dup.slice(1).forEach(d => { d.duplicate = true})
+        }
+        return dup
+    }
+
+    const rowStyleFor = dup => { if (dup.duplicate) return 'duplicate-row'; else return ''; }
+
+    return (<div className={className}>
         <section>
             <h2>Accounts</h2>
             <ul>
@@ -109,7 +178,9 @@ export const Upload = props => {
                     <li>Uploads:</li>
                     { feeds.length > 0 && (<ol>
                         {feeds.map(f => (<li>{f.file} uploaded on {formatDDMMYYYY(new Date(f.dateImported))} at {formatHHMM(new Date(f.dateImported))}
-                        <button onClick={() => deleteImport(f.id)}>delete</button></li>))}
+                        <button onClick={() => duplicateCheck(f.id)}>duplicate check</button>
+                        <button onClick={() => deleteImport(f.id)}>delete</button>
+                        </li>))}
                     </ol>) }
                     { uploadToAccount === a.id && (<ol>
 
@@ -130,22 +201,62 @@ export const Upload = props => {
                     <button onClick={_ => addAccount()}>Add</button></li>
             </ul>
         </section>
+        { dups && Object.keys(dups).length > 0 && (<section>
+            <h2>Duplicates</h2>
+            <button name="assumptions" onClick={_ => dispatchDups({type: 'make-assumptions'})}>Assumptions</button>
+            <table>
+                <thead>
+                <tr>
+                    <th>line</th>
+                    <th>content</th>
+                    <th>Duplicate</th>
+                </tr>
+                </thead>
+                <tbody>
+                { Object.keys(dups).map((k, i) => <>
+                        <tr key={`${i}-dashed}`}><td>----------------</td></tr>
+                        { dups[k].map((d,j) =>  <tr key={`${i}-${j}`} className={rowStyleFor(d)}>
+                            <td>{d.recordNumber}</td>
+                            <td><label for={`duplicate-${i}-${j}`}>{d.content}</label></td>
+                            <td>{d.count}</td>
+                            <td><input id={`duplicate-${i}-${j}`}
+                                       name={`duplicate-${i}-${j}`}
+                                       type="checkbox"
+                                       checked={d.duplicate}
+                                       onChange={_ => dispatchDups(
+                                           {   type: 'change-dup',
+                                               hash: d.contentHash,
+                                               recordNumber: d.recordNumber,
+                                               duplicate: !d.duplicate})}/>
+                            </td>
+                        </tr>)}
+                        </>)}
+                </tbody>
+            </table>
+            <button name='save'onClick={() => saveDuplicates()}>Save</button>
+        </section>)}
+
         <section>
             <h2>Categories</h2>
             <ul>
                 { categories && categories.map(c => (<>
-                    <li><input name={`category-${c.id}`} value={c.name} onChange={e => dispatch({type: 'update-category-name', categoryId: c.id, name: e.target.value})}/>
-                        <button onClick={() => dispatch({type: 'remove-category', categoryId: c.id})}>X</button>
+                    <li><input name={`category-${c.id}`} value={c.name} onChange={e => dispatchCat({type: 'update-category-name', categoryId: c.id, name: e.target.value})}/>
+                        <button onClick={() => dispatchCat({type: 'remove-category', categoryId: c.id})}>X</button>
                     </li>
                     <ul>
-                        { c.matchers && c.matchers.map(m => <li><input name={m.id} value={m.pattern} onChange={e => dispatch({type: 'update-matcher', categoryId: c.id, matcherId: m.id, pattern: e.target.value})}/>
-                        <button onClick={() => dispatch({type: 'remove-matcher', categoryId: c.id, matcherId: m.id})}>X</button>
+                        { c.matchers && c.matchers.map(m => <li><input name={m.id} value={m.pattern} onChange={e => dispatchCat({type: 'update-matcher', categoryId: c.id, matcherId: m.id, pattern: e.target.value})}/>
+                        <button onClick={() => dispatchCat({type: 'remove-matcher', categoryId: c.id, matcherId: m.id})}>X</button>
                         </li>)}
-                        <li><button onClick={_ => dispatch({type: 'add-matcher', categoryId: c.id})}>Add</button></li>
+                        <li><button onClick={_ => dispatchCat({type: 'add-matcher', categoryId: c.id})}>Add</button></li>
                         </ul></>))}
-                <li><button onClick={_ => dispatch({type: 'add-category'})}>Add</button></li>
+                <li><button onClick={_ => dispatchCat({type: 'add-category'})}>Add</button></li>
             </ul>
             <button onClick={saveCategories}>Save</button>
         </section>
     </div>)
-}
+})` 
+
+ .duplicate-row {
+   text-decoration: line-through;
+ }
+ `
