@@ -5,6 +5,7 @@ import {DataEntry} from "./containers/dataentry/DataEntry";
 import styled from 'styled-components'
 import {Reports} from "./containers/reports/reports";
 import {Upload} from "./containers/upload/upload";
+import {Accounts} from "./containers/accounts/accounts";
 
 const StyledHeader = styled.header`
     display: flex;
@@ -45,7 +46,7 @@ function App() {
     <Router>
       <StyledHeader className="App-header">
             <ol>
-                <li><NavLink activeClassName='navActive' to="/upload">Upload</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/accounts">Accounts</NavLink></li>
                 <li><NavLink activeClassName='navActive' to="/month">Monthly</NavLink></li>
                 <li><NavLink activeClassName='navActive' to="/reports">Reports</NavLink></li>
             </ol>
@@ -59,9 +60,12 @@ function App() {
             <Route exact={false} key="route-2" path='/reports'>
                 <Reports/>
             </Route>
-            <Route exact={false} key="route-3" path='/upload'>
-                <Upload/>
+            <Route exact={false} key="route-3" path='/accounts'>
+                <Accounts/>
             </Route>
+          <Route exact={false} key="route-3" path='/upload'>
+              <Upload/>
+          </Route>
             <Route>
                 <Redirect to='enterdata'/>
             </Route>

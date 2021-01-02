@@ -2,7 +2,6 @@ import React, {useEffect, useReducer, useState} from 'react';
 import styled from "styled-components";
 import {v4 as uuidv4} from "uuid";
 import {formatDDMMYYYY, formatHHMM} from "../util";
-import {testdups} from "./testdups";
 
 
 export const Upload = styled(({className}) => {
