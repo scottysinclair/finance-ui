@@ -6,6 +6,7 @@ import styled from 'styled-components'
 import {Reports} from "./containers/reports/reports";
 import {Upload} from "./containers/upload/upload";
 import {Accounts} from "./containers/accounts/accounts";
+import {Categories} from "./containers/categories/categories";
 
 const StyledHeader = styled.header`
     display: flex;
@@ -39,7 +40,9 @@ const StyledMain = styled.main`
 `;
 
 function App() {
-    const [headerInfo, setHeaderInfo] = useState("")
+  const [headerInfo, setHeaderInfo] = useState("")
+  const currentMonth = new Date().getMonth() + 1
+  const currentYear = new Date().getFullYear()
 
   return (
     <div className="App">
@@ -47,22 +50,29 @@ function App() {
       <StyledHeader className="App-header">
             <ol>
                 <li><NavLink activeClassName='navActive' to="/accounts">Accounts</NavLink></li>
-                <li><NavLink activeClassName='navActive' to="/month">Monthly</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/categories">Categories</NavLink></li>
+                <li><NavLink activeClassName='navActive' to="/transactions">Transactions</NavLink></li>
                 <li><NavLink activeClassName='navActive' to="/reports">Reports</NavLink></li>
             </ol>
             <h1>{headerInfo}</h1>
       </StyledHeader>
       <StyledMain>
           <Switch>
-            <Route exact={true} key="route-1" path='/month'>
-              <DataEntry onChangeHeaderInfo={(text) => setHeaderInfo(text)}/>
+            <Route exact={true} key="route-1" path='/transactions'>
+              <Redirect to={`/transactions/${currentYear}/${currentMonth}`}/>
             </Route>
+              <Route exact={true} key="route-1" path='/transactions/:year/:month'>
+                  <DataEntry onChangeHeaderInfo={(text) => setHeaderInfo(text)}/>
+              </Route>
             <Route exact={false} key="route-2" path='/reports'>
                 <Reports/>
             </Route>
             <Route exact={false} key="route-3" path='/accounts'>
                 <Accounts/>
             </Route>
+          <Route exact={false} key="route-3" path='/categories'>
+              <Categories/>
+          </Route>
           <Route exact={false} key="route-3" path='/upload'>
               <Upload/>
           </Route>

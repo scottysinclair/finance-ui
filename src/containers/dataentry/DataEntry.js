@@ -1,4 +1,6 @@
 import React, {createRef, useEffect, useLayoutEffect, useRef, useState} from 'react';
+import {useParams, useHistory} from "react-router-dom";
+
 import styled from 'styled-components'
 import { v4 as uuidv4 } from 'uuid';
 import {Transactions} from "./Transactions";
@@ -80,12 +82,14 @@ const passesFilter = (t, filter) =>  {
 }
 
 export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
+    const routeParams = useParams()
+    const history = useHistory();
     const [changeCategoryFor, setChangeCategoryFor] = useState(null)
     const [monthData, setMonthData] = useState()
     const [categories, setCategories] = useState([])
     const [transactions, setTransactions] = useState([])
     const [filteredTransactions, setFilteredTransactions] = useState([])
-    const [currentMonth, setCurrentMonth] = useState({ month: 10, year: 2020})
+    const [currentMonth, setCurrentMonth] = useState({ month: parseInt(routeParams.month), year: parseInt(routeParams.year)})
     const [showChart, setShowChart] = useState(false)
     const [showHelp, setShowHelp] = useState(false)
     const [filter, setFilter] = useState({})
@@ -94,6 +98,19 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const commentFilterRef = useRef()
     const categoryFilterRef = useRef()
     const amountFilterRef = useRef()
+
+    useEffect(() => {
+        return history.listen(location => {
+            if (location.pathname.startsWith('/transactions')) {
+                const results = location.pathname.match(/\/transactions\/(.+)\/(.+)/)
+                if (results.length === 3) {
+                    setCurrentMonth({month: parseInt(results[2]), year: parseInt(results[1])})
+                }
+            }
+        })
+    },[history])
+
+
 
     useEffect(() => {
         fetch(loadCurrentMonth(currentMonth.year, currentMonth.month))
@@ -206,12 +223,18 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     }
 
     const setNextMonth = () => {
-        if (currentMonth.month === 12) setCurrentMonth({year: currentMonth.year + 1, month: 1})
-        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month + 1})
+        let result
+        if (currentMonth.month === 12) result = {year: currentMonth.year + 1, month: 1}
+        else result = {year: currentMonth.year, month: currentMonth.month + 1}
+        setCurrentMonth(result)
+        history.push(`/transactions/${result.year}/${result.month}`)
     }
     const setPrevMonth = () => {
-        if (currentMonth.month === 1) setCurrentMonth({year: currentMonth.year - 1, month: 12})
-        else setCurrentMonth({year: currentMonth.year, month: currentMonth.month - 1})
+        let result
+        if (currentMonth.month === 1) result = {year: currentMonth.year - 1, month: 12}
+        else result = {year: currentMonth.year, month: currentMonth.month - 1}
+        setCurrentMonth(result)
+        history.push(`/transactions/${result.year}/${result.month}`)
     }
 
     const categoryChanged = cat => {
