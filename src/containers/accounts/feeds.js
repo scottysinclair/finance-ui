@@ -50,7 +50,7 @@ export const Feeds = props => {
             { feeds.map((f, i) => <tr key={`f0-${i}`}>
                  <td key={`f1-${i}`}><input type='radio' name='feed' onChange={_ => setActiveFeed(f)} checked={f === activeFeed}/></td>
                  <td key={`f2-${i}`}>{f.file}</td>
-                 <td key={`f3-${i}`}>{new Date(f.dateImported).toLocaleDateString()} {new Date(f.dateImported).toLocaleTimeString()}</td>
+                 <td key={`f3-${i}`}>{new Date(f.dateImported).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })} {new Date(f.dateImported).toLocaleTimeString()}</td>
              </tr>)}
             </tbody>
         </table>
@@ -58,9 +58,9 @@ export const Feeds = props => {
             <div key='overview'>
                 <dl>
                     <dt>From</dt>
-                    <dd>{new Date(activeFeed.fromDate).toLocaleDateString()}</dd>
+                    <dd>{new Date(activeFeed.fromDate).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
                     <dt>To</dt>
-                    <dd>{new Date(activeFeed.toDate).toLocaleDateString()}</dd>
+                    <dd>{new Date(activeFeed.toDate).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })}</dd>
                     <dt>Transactions</dt>
                     <dd>{activeFeed.numberOfTransactions}</dd>
                 </dl>

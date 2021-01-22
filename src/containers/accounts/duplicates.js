@@ -45,7 +45,7 @@ export const Duplicates = styled( ({className, feedId})  => {
             case 'change-dup':
                 const v = Object.assign({}, state);
                 v[action.hash] = state[action.hash].map(d => {
-                    return  d.recordNumber === action.recordNumber ? {...d, duplicate: !d.duplicate} : d;
+                    return  d.recordNumber === action.recordNumber ? {...d, duplicate: action.duplicate} : d;
                 })
                 return v;
             case 'make-assumptions':
@@ -81,15 +81,43 @@ export const Duplicates = styled( ({className, feedId})  => {
                         <td key={`d1-${i}-${j}`}>{d.recordNumber}</td>
                         <td key={`d2-${i}-${j}`}><label for={`duplicate-${i}-${j}`}>{d.content}</label></td>
                         <td key={`d3-${i}-${j}`}>{d.count}</td>
-                        <td key={`d4-${i}-${j}`}><input id={`duplicate-${i}-${j}`}
-                                   name={`duplicate-${i}-${j}`}
-                                   type="checkbox"
-                                   checked={d.duplicate}
-                                   onChange={_ => dispatchDups(
-                                       {   type: 'change-dup',
-                                           hash: d.contentHash,
-                                           recordNumber: d.recordNumber,
-                                           duplicate: !d.duplicate})}/>
+                        <td key={`d4-${i}-${j}`} className='radio'>
+                            <label>yes
+                                <input id={`duplicate-${i}-${j}`}
+                                       name={`duplicate-${i}-${j}`}
+                                       type="radio"
+                                       value="yes"
+                                       checked={d.duplicate === true}
+                                       onChange={_ => dispatchDups(
+                                           {   type: 'change-dup',
+                                               hash: d.contentHash,
+                                               recordNumber: d.recordNumber,
+                                               duplicate: true})}/>
+                            </label>
+                            <label>no
+                                <input id={`duplicate-${i}-${j}`}
+                                       name={`duplicate-${i}-${j}`}
+                                       type="radio"
+                                       value="no"
+                                       checked={d.duplicate !== true && d.duplicate !== null}
+                                       onChange={_ => dispatchDups(
+                                           {   type: 'change-dup',
+                                               hash: d.contentHash,
+                                               recordNumber: d.recordNumber,
+                                               duplicate: false})}/>
+                            </label>
+                            <label>don't know
+                                <input id={`duplicate-${i}-${j}`}
+                                       name={`duplicate-${i}-${j}`}
+                                       type="radio"
+                                       value="unknown"
+                                       checked={d.duplicate === null}
+                                       onChange={_ => dispatchDups(
+                                           {   type: 'change-dup',
+                                               hash: d.contentHash,
+                                               recordNumber: d.recordNumber,
+                                               duplicate: null})}/>
+                            </label>
                         </td>
                     </tr>)}
                 </>)}
@@ -99,6 +127,12 @@ export const Duplicates = styled( ({className, feedId})  => {
 })` 
 
  .duplicate-row {
-   text-decoration: line-through;
+   td {
+    text-decoration: line-through;
+   }
+   td.radio {
+    text-decoration: none;
+   }
+   
  }
  `
