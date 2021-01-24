@@ -31,9 +31,7 @@ export const Transactions = styled(({
                                         saveTransaction}) => {
     const [dateRefs, setDateRefs] = useState([]);
     const [descriptionRefs, setDescriptionRefs] = useState([]);
-    const [commentRefs, setCommentRefs] = useState([]);
     const [categoryRefs, setCategoryRefs] = useState([]);
-    const [importantRefs, setImportantRefs] = useState([]);
     const [amountRefs, setAmountRefs] = useState([]);
     const [activeCell, setActiveCell] = useState(null);
     const [deleteStarted, setDeleteStarted] = useState({})
@@ -43,9 +41,7 @@ export const Transactions = styled(({
     useEffect(() => {
         setDateRefs( createRefs1d(dateRefs, Math.max(transactions.length, dateRefs.length)) );
         setDescriptionRefs( createRefs1d(descriptionRefs, Math.max(transactions.length, descriptionRefs.length)) );
-        setCommentRefs( createRefs1d(commentRefs, Math.max(transactions.length, commentRefs.length)));
         setCategoryRefs( createRefs1d(categoryRefs, Math.max(transactions.length, categoryRefs.length)));
-        setImportantRefs( createRefs1d(importantRefs, Math.max(transactions.length, importantRefs.length)));
         setAmountRefs( createRefs1d(amountRefs, Math.max(transactions.length, amountRefs.length)));
     }, [transactions.length]);
 
@@ -97,7 +93,6 @@ export const Transactions = styled(({
     const focusField = (field, i) => {
         if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
         if (field === 'description' && descriptionRefs[i] && descriptionRefs[i].current) descriptionRefs[i].current.focus()
-        if (field === 'comment' && commentRefs[i] && commentRefs[i].current) commentRefs[i].current.focus()
         if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) categoryRefs[i].current.focus();
         if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
     }
@@ -107,6 +102,7 @@ export const Transactions = styled(({
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
+            if (e.ctrlKey) return;
             if (e.key === 'Home' || e.key === 'End')
                 if (isActive(t, field)) e.stopPropagation()
                 else e.preventDefault()
@@ -189,7 +185,7 @@ export const Transactions = styled(({
                        ref={categoryRefs[i]}
                        autoFocus={i === 0 && autoFocus}
                        className={classes('category', changeCategoryFor === t.uuid ? 'changeCategoryFor' : null)}
-                       onKeyDown={onKeyDown(t, 'category', categoryRefs, i, commentRefs, importantRefs)}
+                       onKeyDown={onKeyDown(t, 'category', categoryRefs, i, descriptionRefs, amountRefs)}
                        disabled={changeCategoryFor != null}
                        onClick={e => e.preventDefault()}>{t.category}</button>
     }
@@ -205,7 +201,7 @@ export const Transactions = styled(({
                       readOnly={!isActive(t, field)}
                       disabled={changeCategoryFor != null}
                       type='text'
-                      autoFocus={i === 0 && field === 'comment' ? true : false}
+                      autoFocus={i === 0 && field === 'description' ? true : false}
                       value={value != null ? value : ''}
                       onChange={e => updateTransaction(t, field, e.target.value)}
                       {...other}/>
@@ -224,9 +220,7 @@ export const Transactions = styled(({
                 <tr>
                     <th key='day-header'>Day</th>
                     <th key='description-header'>Description</th>
-                    <th key='comment-header'>Comment</th>
                     <th key='category-header'>Category</th>
-                    <th key='important-header'>Important</th>
                     <th key='amount-header'>Amount</th>
                 </tr>
                 </thead>
@@ -234,19 +228,13 @@ export const Transactions = styled(({
                 {   transactions
                     .map((t,i) => (<tr key={t.uuid} className={classes( deletingTransaction(t) ? 'deleting' : null)}>
                         <td key='day'>
-                            {inputCell(t, 'day', dateRefs, i, t.day, {rightRefs: commentRefs}, {maxLength: 2}) }
+                            {inputCell(t, 'day', dateRefs, i, t.day, {rightRefs: descriptionRefs}, {maxLength: 2}) }
                         </td>
                         <td key='content'>
-                            {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: commentRefs}) }
-                        </td>
-                        <td key='comment'>
-                            {inputCell(t, 'comment', commentRefs, i, t.comment, {leftRefs: descriptionRefs, rightRefs: categoryRefs}) }
+                            {inputCell(t, 'description', descriptionRefs, i, t.description, {leftRefs: dateRefs, rightRefs: categoryRefs}) }
                         </td>
                         <td key='category'>
                             {categoryCell(t, i)}
-                        </td>
-                        <td key='important'>
-                            {inputCell(t, 'important', importantRefs, i, t.important, {rightRefs: amountRefs, leftRefs: categoryRefs}) }
                         </td>
                         <td key='amount'>
                             {inputCell(t, 'amount', amountRefs, i, t.amount, {leftRefs: categoryRefs}) }
@@ -312,9 +300,6 @@ export const Transactions = styled(({
    }
    input.description {
      width: 30rem;
-   }
-   input.comment {
-     width: 10rem;
    }
    input.amount {
      width: 4rem;

@@ -44,9 +44,7 @@ const loadTransactions = (year, month) => fetch(`http://localhost:8080/transacti
         day: t.day,
         month: t.month,
         year: t.year,
-        comment: t.comment,
         category: t.category,
-        important: t.important,
         amount: t.amount
     }}))
 
@@ -95,7 +93,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const [filter, setFilter] = useState({})
     const dayFilterRef = useRef()
     const descriptionFilterRef = useRef()
-    const commentFilterRef = useRef()
     const categoryFilterRef = useRef()
     const amountFilterRef = useRef()
 
@@ -126,17 +123,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         setFilteredTransactions(transactions.filter(t => passesFilter(t, filter)))
     },[transactions, filter])
 
-    useEffect(() => {
-        if (transactions.length === 0) {
-            commentFilterRef.current && commentFilterRef.current.focus()
-        }
-    },[transactions.length])
-    useEffect(() => {
-        if (showChart) {
-            commentFilterRef.current && commentFilterRef.current.focus()
-        }
-    },[showChart])
-
 
     useEffect(() => {
         onChangeHeaderInfo(<>
@@ -162,14 +148,13 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             const x = getFilterRef(filter['--source'].split('_')[1]); x && x.current && x.current.focus()
         }
         else if (filteredTransactions.length === 0 && !filter['--source']) {
-            const x = getFilterRef('comment'); x && x.current && x.current.focus()
+            const x = getFilterRef('description'); x && x.current && x.current.focus()
         }
     }, [filteredTransactions, changeCategoryFor])
 
     const getFilterRef = source => {
         if (source === 'day') return dayFilterRef
         if (source === 'description') return descriptionFilterRef
-        if (source === 'comment') return commentFilterRef
         if (source === 'category') return categoryFilterRef
         if (source === 'amount') return amountFilterRef
     }
@@ -192,7 +177,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             day: null,
             month: currentMonth.month,
             year: currentMonth.year,
-            comment: null,
             category: null,
             amount: null
         })
@@ -313,17 +297,6 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                                disabled={!showChart && !causedEmptyTableOrNoData('description')}
                                value={filter.description || '' }
                                onKeyDown={onKeyDownForFilter('description')}
-                               maxLength={1}/>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Comment</th>
-                    <td className='comment'>
-                        <input ref={commentFilterRef}
-                               readOnly={true}
-                               disabled={!showChart && !causedEmptyTableOrNoData('comment')}
-                               value={filter.comment || '' }
-                               onKeyDown={onKeyDownForFilter('comment')}
                                maxLength={1}/>
                     </td>
                 </tr>
