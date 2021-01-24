@@ -39,7 +39,7 @@ const MyResponsiveLine = styled(({className, data}) => <div className={className
             type: 'time',
             format: '%Y-%m-%d',
             useUTC: false,
-            precision: 'month'
+            precision: 'day'
         }}
         xFormat="time:%Y-%m-%d"
         yScale={{ type: 'linear', min: 'auto', max: 'auto' }}

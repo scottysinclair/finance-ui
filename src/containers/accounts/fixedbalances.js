@@ -44,7 +44,7 @@ export const FixedBalances = props => {
             </thead>
             <tbody>
             { fixedBalances && fixedBalances.map( fb => <tr>
-                    <td>{new Date(fb.time).toLocaleDateString()} {new Date(fb.time).toLocaleTimeString()}</td>
+                    <td>{new Date(fb.time).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })} {new Date(fb.time).toLocaleTimeString()}</td>
                     <td>{fb.amount}</td>
                 </tr>)}
             </tbody>
