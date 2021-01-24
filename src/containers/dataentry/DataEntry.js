@@ -107,6 +107,17 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         })
     },[history])
 
+    useEffect(() => {
+        if (transactions.length === 0) {
+            descriptionFilterRef.current && descriptionFilterRef.current.focus()
+        }
+    },[transactions.length])
+    useEffect(() => {
+        if (showChart) {
+            descriptionFilterRef.current && descriptionFilterRef.current.focus()
+        }
+    },[showChart])
+
 
 
     useEffect(() => {
@@ -273,11 +284,11 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     const onKeyDownBubble = e => {
         if (e.key === 'End') {
-            setPrevMonth()
+            setNextMonth()
             e.preventDefault()
         }
         if (e.key === 'Home') {
-            setNextMonth()
+            setPrevMonth()
             e.preventDefault()
         }
     }
