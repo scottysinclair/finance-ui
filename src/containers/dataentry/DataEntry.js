@@ -38,6 +38,7 @@ const loadTransactions = (year, month) => fetch(`http://localhost:8080/transacti
     .then(json => json.transactions.map(t =>
     { return {
         id: t.id,
+        feed: t.feed,
         uuid: uuidv4(),
         description: t.description,
         account: t.account,
