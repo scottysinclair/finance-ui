@@ -115,7 +115,15 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     },[transactions.length])
     useEffect(() => {
         if (showChart) {
-            descriptionFilterRef.current && descriptionFilterRef.current.focus()
+            if (filterSource()[1] === 'day')
+                dayFilterRef.current && dayFilterRef.current.focus()
+            else if (filterSource()[1] === 'description')
+                descriptionFilterRef.current && descriptionFilterRef.current.focus()
+            else if (filterSource()[1] === 'category')
+                categoryFilterRef.current && categoryFilterRef.current.focus()
+            else if (filterSource()[1] === 'amount')
+                amountFilterRef.current && amountFilterRef.current.focus()
+            else descriptionFilterRef.current && descriptionFilterRef.current.focus()
         }
     },[showChart])
 
@@ -302,6 +310,17 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     return <header className='dataentry'>
             <table>
                 <tr>
+                    <th>Day</th>
+                    <td className='day'>
+                        <input ref={dayFilterRef}
+                               readOnly={true}
+                               disabled={!showChart && !causedEmptyTableOrNoData('day')}
+                               value={filter.day || '' }
+                               onKeyDown={onKeyDownForFilter('day')}
+                               maxLength={1}/>
+                    </td>
+                </tr>
+                <tr>
                     <th>Description</th>
                     <td className='description'>
                         <input ref={descriptionFilterRef}
@@ -320,6 +339,17 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                                disabled={!showChart && !causedEmptyTable('category')}
                                value={filter.category || '' }
                                onKeyDown={onKeyDownForFilter('category')}
+                               maxLength={1}/>
+                    </td>
+                </tr>
+                <tr>
+                    <th>Amount</th>
+                    <td className='amount'>
+                        <input ref={amountFilterRef}
+                               readOnly={true}
+                               disabled={!showChart && !causedEmptyTable('amount')}
+                               value={filter.amount || '' }
+                               onKeyDown={onKeyDownForFilter('amount')}
                                maxLength={1}/>
                     </td>
                 </tr>
