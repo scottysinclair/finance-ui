@@ -83,7 +83,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
                         .filter((c => changeCategoryFor || c.total !== 0))
                         .map((c, i) => (<tr key={c.id}>
                             <td key='name'><SelectButton i={i} name={c.name}/></td>
-                            <td key='total'><span>{round(c.total)}</span></td>
+                            <td key='total'><span>{round(c.total || 0)}</span></td>
                         </tr>)) }
                     </tbody>
                 </table>

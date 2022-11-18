@@ -67,11 +67,28 @@ const toMonthName = month => {
     if (month === 12) return 'December'
 }
 
-const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b]$");
+const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b,.-]$");
 const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
 const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
 
 
+const passesFilter = (t, filter) =>  {
+    if (!filter || filter.length == 0) return true;
+    for (var key in t) {
+        if (t[key] && t[key].toString().toLowerCase().includes(filter.toLowerCase())) {
+            return true;
+        }
+    }
+    return false;
+    /*
+    filterKeys.length === 0  ||
+        filterKeys.map(k => { return { f: k, v: filter[k].toLowerCase()}})
+        .filter(pair => t[pair.f] && ('' + t[pair.f]).toLowerCase().includes(pair.v))
+        .length  === filterKeys.length
+        */
+}
+
+/*
 const passesFilter = (t, filter) =>  {
     const filterKeys = Object.keys(filter).filter(k => !k.startsWith('--'))
     return filterKeys.length === 0  ||
@@ -79,6 +96,7 @@ const passesFilter = (t, filter) =>  {
         .filter(pair => t[pair.f] && ('' + t[pair.f]).toLowerCase().includes(pair.v))
         .length  === filterKeys.length
 }
+*/
 
 export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const routeParams = useParams()
@@ -91,11 +109,12 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     const [currentMonth, setCurrentMonth] = useState({ month: parseInt(routeParams.month), year: parseInt(routeParams.year)})
     const [showChart, setShowChart] = useState(false)
     const [showHelp, setShowHelp] = useState(false)
-    const [filter, setFilter] = useState({})
+    const [filter, setFilter] = useState("")
     const dayFilterRef = useRef()
     const descriptionFilterRef = useRef()
     const categoryFilterRef = useRef()
     const amountFilterRef = useRef()
+    const filterRef = useRef()
 
     useEffect(() => {
         return history.listen(location => {
@@ -110,23 +129,14 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     useEffect(() => {
         if (transactions.length === 0) {
-            descriptionFilterRef.current && descriptionFilterRef.current.focus()
+            filterRef.current && filterRef.current.focus()
         }
     },[transactions.length])
     useEffect(() => {
         if (showChart) {
-            if (filterSource()[1] === 'day')
-                dayFilterRef.current && dayFilterRef.current.focus()
-            else if (filterSource()[1] === 'description')
-                descriptionFilterRef.current && descriptionFilterRef.current.focus()
-            else if (filterSource()[1] === 'category')
-                categoryFilterRef.current && categoryFilterRef.current.focus()
-            else if (filterSource()[1] === 'amount')
-                amountFilterRef.current && amountFilterRef.current.focus()
-            else descriptionFilterRef.current && descriptionFilterRef.current.focus()
+            filterRef.current && filterRef.current.focus()
         }
     },[showChart])
-
 
 
     useEffect(() => {
@@ -163,15 +173,15 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                     total: newTotal
                 }})))
         }
-
-        if (filteredTransactions.length === 0 && filter['--source'] && !changeCategoryFor) {
-            const x = getFilterRef(filter['--source'].split('_')[1]); x && x.current && x.current.focus()
-        }
-        else if (filteredTransactions.length === 0 && !filter['--source']) {
-            const x = getFilterRef('description'); x && x.current && x.current.focus()
-        }
     }, [filteredTransactions, changeCategoryFor])
 
+
+  useEffect(() => {
+    if (filteredTransactions.length == 0) {
+       filterRef.current && filterRef.current.focus()
+    }
+  }, [filteredTransactions])
+  
     const getFilterRef = source => {
         if (source === 'day') return dayFilterRef
         if (source === 'description') return descriptionFilterRef
@@ -179,13 +189,10 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         if (source === 'amount') return amountFilterRef
     }
 
-    const updateFilter = (field, value, source) => {
-        const x = {...filter }
-        if (field && value) x[field] = value
-        if (field && !value) delete x[field]
-        if (!field) Object.keys(x).filter(k => !k.startsWith('--')).forEach(k => delete x[k])
-        if (source) x['--source'] = source
-        setFilter(x)
+
+    const updateFilter = (key) => {
+        console.log("update filter", filter, key)
+        onKeyDownForFilter({key: key})
     }
 
     const addTransaction = i => {
@@ -206,7 +213,33 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
 
     const filterSource = () => (filter['--source'] && filter['--source'].split('_')) || [null, null]
 
-    const onKeyDownForFilter = field => e => {
+    const onKeyDownForFilter = e => {
+        if (e.key === 'Escape') {
+            setFilter(null)
+            return
+        }
+        if (e.key === 'Backspace') {
+            if (filter && filter.length > 1 ) {
+                setFilter(filter.substring(0, filter.length - 1))
+            }
+            else {
+                setFilter(null)
+            }
+            return
+        }
+        if (dataEntryKeys.test(e.key)) {
+            console.log("ZZZ", e)
+            if (filter) {
+              setFilter(filter + e.key)
+            }
+            else {
+              setFilter(e.key)                
+            }
+        }
+    }
+
+/*
+    const onKeyDownForFilter = () => e => {
         if (e.key === 'Escape') updateFilter(null, null)
 
         if (filterSource()[1] && filterSource()[1] !== field) return
@@ -218,14 +251,14 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
         }
         if (dataEntryKeys.test(e.key)) {
             if (filter[field]) {
-                updateFilter(field, filter[field] + e.key)
+                setFilter(filter + e.key)
             }
             else {
-                updateFilter(field, e.key)
+                setFilter(field, e.key)
             }
         }
     }
-
+*/
     const setNextMonth = () => {
         let result
         if (currentMonth.month === 12) result = {year: currentMonth.year + 1, month: 1}
@@ -303,58 +336,14 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
     }
 
     const renderFilter = () => {
-
-    const causedEmptyTable = field => filteredTransactions.length === 0 && filterSource()[1] === field
-    const causedEmptyTableOrNoData = field => causedEmptyTable(field) || transactions.length === 0
-
-    return <header className='dataentry'>
-            <table>
-                <tr>
-                    <th>Day</th>
-                    <td className='day'>
-                        <input ref={dayFilterRef}
-                               readOnly={true}
-                               disabled={!showChart && !causedEmptyTableOrNoData('day')}
-                               value={filter.day || '' }
-                               onKeyDown={onKeyDownForFilter('day')}
-                               maxLength={1}/>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Description</th>
-                    <td className='description'>
-                        <input ref={descriptionFilterRef}
-                               readOnly={true}
-                               disabled={!showChart && !causedEmptyTableOrNoData('description')}
-                               value={filter.description || '' }
-                               onKeyDown={onKeyDownForFilter('description')}
-                               maxLength={1}/>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Category</th>
-                    <td className='category'>
-                        <input ref={categoryFilterRef}
-                               readOnly={true}
-                               disabled={!showChart && !causedEmptyTable('category')}
-                               value={filter.category || '' }
-                               onKeyDown={onKeyDownForFilter('category')}
-                               maxLength={1}/>
-                    </td>
-                </tr>
-                <tr>
-                    <th>Amount</th>
-                    <td className='amount'>
-                        <input ref={amountFilterRef}
-                               readOnly={true}
-                               disabled={!showChart && !causedEmptyTable('amount')}
-                               value={filter.amount || '' }
-                               onKeyDown={onKeyDownForFilter('amount')}
-                               maxLength={1}/>
-                    </td>
-                </tr>
-            </table>
-        </header>
+        const causedEmptyTableOrNoData = field => filteredTransactions.length === 0 || transactions.length === 0
+        return <header className='dataentry'>
+            <input ref={filterRef}
+                   readOnly={true}
+                   disabled={!showChart && !causedEmptyTableOrNoData()}
+                   value={filter || '' }
+                   onKeyDown={onKeyDownForFilter}/>
+            </header>
     }
 
     return (
@@ -376,7 +365,7 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
                     .filter(c => c.total !== 0)}/>
             </>) : (
             <ContentDiv>
-                { (transactions.length === 0 || Object.keys(filter).filter( k => !k.startsWith('--')).length > 0) && renderFilter() }
+                { (transactions.length === 0 || (filter != null && filter.length > 0)) && renderFilter() }
 
                 <Transactions {...{
                     filter,
@@ -392,9 +381,9 @@ export const DataEntry = styled(({className, onChangeHeaderInfo}) => {
             <footer>
                 <dl>
                     <dt>Month Start</dt>
-                    <dd>{monthData && round(monthData.startingBalance)}</dd>
+                    <dd>{monthData && round(monthData.startingBalance || 0)}</dd>
                     <dt>Month End</dt>
-                    <dd>{monthData && round(transactions.map(t => t.amount).reduce((a, b) => a + b, monthData.startingBalance))}</dd>
+                    <dd>{monthData && round(transactions.map(t => t.amount).reduce((a, b) => a + b, monthData.startingBalance || 0))}</dd>
                 </dl>
             </footer>
         </DataEntrySection> )

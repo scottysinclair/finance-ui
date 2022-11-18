@@ -15,8 +15,7 @@ const classes = (...array) => array.filter(i => i != null).reduce((a, b) => {
 const round = n => Math.round((n + Number.EPSILON) * 100) / 100
 const dataEntryKeys = new RegExp("^[-a-zA-Z0-9! \b]$");
 const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
-const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
-
+//const scrollIntoView = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.scrollIntoView()
 
 export const Transactions = styled(({
                                         className,
@@ -37,6 +36,18 @@ export const Transactions = styled(({
     const [deleteStarted, setDeleteStarted] = useState({})
     const [currentOp, setCurrentOp] = useState({})
     const prev = usePrevious({changeCategoryFor, activeCell, filter});
+    const tableContainerRef = useRef(null);
+
+    const focusRef1d = (refArray, i, options) => {
+        if (refArray && refArray[i] && refArray[i].current) { 
+            if (tableContainerRef.current) {
+                tableContainerRef.current.scrollTop = 0
+                refArray[i].current.focus()
+            }
+        }
+    };
+
+
 
     useEffect(() => {
         setDateRefs( createRefs1d(dateRefs, Math.max(transactions.length, dateRefs.length)) );
@@ -46,17 +57,8 @@ export const Transactions = styled(({
     }, [transactions.length]);
 
     useLayoutEffect(() => {
-        if (currentOp && currentOp.name === 'AddTransaction') {
-            focusField(currentOp.focusAfter.f, currentOp.focusAfter.i)
-            setCurrentOp(null)
-        }
-        if (filter['--source']) {
-            const [transaction_uuid, field] = filter['--source'].split('_')
-            const index = transactions.findIndex( t => t.uuid === transaction_uuid )
-            if (index >= 0) focusField(field, index)
-            else if (transactions.length > 0) {
-                focusField(field, 0)
-            }
+        if (transactions.length > 0) {
+            focusField('description', 0)
         }
     }, [transactions.length])
 
@@ -107,14 +109,18 @@ export const Transactions = styled(({
                 if (isActive(t, field)) e.stopPropagation()
                 else e.preventDefault()
 
-            if (e.key === 'ArrowUp' && !isActive(t, field) && !deleteStarted.t)
-                focusRef1d(refArray, i - 1)
+            if (e.key === 'ArrowUp' && !isActive(t, field) && !deleteStarted.t) {
+                focusRef1d(refArray, i - 1, {behavior: 'auto', block: 'center', inline: 'center'})
+                e.preventDefault()
+            }
             if (e.key === 'PageUp' && !isActive(t, field) && !deleteStarted.t) {
                 focusRef1d(refArray, i - 10 > 0 ? i - 10 : 0)
                 e.preventDefault()
             }
-            if (e.key === 'ArrowDown' && !isActive(t, field) && !deleteStarted.t)
-                focusRef1d(refArray, i + 1)
+            if (e.key === 'ArrowDown' && !isActive(t, field) && !deleteStarted.t) {
+                focusRef1d(refArray, i + 1, {alignToTop: false})
+                e.preventDefault()
+            }
             if (e.key === 'PageDown'  && !isActive(t, field) && !deleteStarted.t) {
                 focusRef1d(refArray, i + 10 < refArray.length ? i + 10 : refArray.length - 1)
                 e.preventDefault()
@@ -151,14 +157,21 @@ export const Transactions = styled(({
 
             if (e.key === 'Escape') {
                 if (deleteStarted.t) setDeleteStarted({})
-                else if (filter[field]) updateFilter(null, null)
+                else if (filter) updateFilter(null)
                 else if (isActive(t, field)) setActiveCell(null)
             }
 
             if (!isActive(t, field)) onKeyDownForFilter(field)(e)
         }
     }
+
+    const onKeyDownForFilter = () => e => {
+        updateFilter(e.key)
+    }
+
+    /*
     const onKeyDownForFilter = (field) => e => {
+
         if (e.key === 'Backspace' && filter[field] && filter[field].length > 1 ) {
             updateFilter(field, filter[field].substring(0, filter[field].length - 1), e.target.id)
         }
@@ -174,6 +187,7 @@ export const Transactions = styled(({
             }
         }
     }
+    */
 
     const isActive = (t, field) => {
         return activeCell && activeCell.t.uuid === t.uuid && activeCell.field === field
@@ -213,7 +227,7 @@ export const Transactions = styled(({
     const deletingTransaction = (t) => deleteStarted && deleteStarted.t && deleteStarted.t.uuid === t.uuid
 
     return <div className={className}>
-        <div className='tableContainer'>
+        <div className='tableContainer' ref={tableContainerRef}>
             { transactions.length > 0 &&
             <table>
                 <thead>
