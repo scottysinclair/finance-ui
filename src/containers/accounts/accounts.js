@@ -49,7 +49,7 @@ export const Accounts = props => {
     }, [])
 
     const loadData = () => {
-        var url = 'http://localhost:8080/account'
+        var url = 'http://localhost:8080/api/account'
         return fetch(url)
             .then(response => response.json())
             .then(json => setAccounts(json.accounts))

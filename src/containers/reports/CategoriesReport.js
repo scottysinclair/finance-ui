@@ -27,7 +27,7 @@ export const CategoriesReport = props => {
 
 
     const loadData = _ => {
-        var url = 'http://localhost:8080/timeseries/categories'
+        var url = 'http://localhost:8080/api/timeseries/categories'
         if (description) {
             url += `?description=${description}`
         }

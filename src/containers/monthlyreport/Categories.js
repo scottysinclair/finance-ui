@@ -2,11 +2,6 @@ import styled from "styled-components";
 import React, {createRef, useEffect, useRef, useState} from "react";
 import FocusTrap from "focus-trap-react";
 
-const round = n => Math.round((n + Number.EPSILON) * 100) / 100
-const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b]$");
-const createRefs1d = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
-const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
-
 
 export const Categories = styled(({className, categories, changeCategoryFor, categoryChanged, getTransaction, quitCategoryMode}) => {
     const [selectCatRefs, setSelectCatRefs] = useState([]);
@@ -16,8 +11,11 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
     const filteredCategories = () => categories.filter(c => !filterText || c.name.toLowerCase().includes(filterText.toLowerCase()))
     const indexOf = categoryName => filteredCategories().findIndex(c => c.name === categoryName)
 
+    /*
+     * build a ref for each category item
+     */
     useEffect(() => {
-        setSelectCatRefs(createRefs1d(selectCatRefs, categories.length));
+        setSelectCatRefs(createRefsArray(selectCatRefs, categories.length));
     }, [categories.length]);
 
     useEffect(() => {
@@ -76,6 +74,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
                     <tr>
                         <th key='name-header'>Name</th>
                         <th key='total-header'>Total</th>
+                        <th key='count-header'>Count</th>
                     </tr>
                     </thead>
                     <tbody>
@@ -84,6 +83,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
                         .map((c, i) => (<tr key={c.id}>
                             <td key='name'><SelectButton i={i} name={c.name}/></td>
                             <td key='total'><span>{round(c.total || 0)}</span></td>
+                            <td key='count'><span>{c.count || 0}</span></td>
                         </tr>)) }
                     </tbody>
                 </table>
@@ -92,7 +92,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
     </FocusTrap>})` 
    position: relative; 
    padding-top: 2rem;
-   margin-left: 5rem;
+   margin-left: 2rem;
    
    div.tableContainer {
     overflow-y: auto; 
@@ -139,7 +139,7 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
    button {
     display: inline-block;
     border: none;
-    height: 1.9rem;    
+//    height: 1.9rem;    
     width: 100%;
     padding: 0.25rem;    
     padding-left: 1rem;
@@ -156,3 +156,9 @@ export const Categories = styled(({className, categories, changeCategoryFor, cat
      outline: none
    }
 `;
+
+const round = n => Math.round((n + Number.EPSILON) * 100) / 100
+const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b]$");
+const createRefsArray = (existingArray, n) => Array(n).fill(null).map((_, i) => existingArray[i] || createRef())
+const focusRef1d = (refArray, i) => refArray && refArray[i] && refArray[i].current && refArray[i].current.focus()
+

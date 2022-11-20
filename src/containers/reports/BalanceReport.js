@@ -8,7 +8,7 @@ export const BalanceReport = props => {
     const [data, setData] = useState(null)
 
     useEffect(() =>{
-        fetch(`http://localhost:8080/timeseries/balance`)
+        fetch(`http://localhost:8080/api/timeseries/balance`)
             .then(response => response.json())
             .then(json => json.data.map(d =>{ return {
                 id: d.id,

@@ -13,12 +13,12 @@ export const FixedBalances = props => {
         loadFixedBalances()
     }, [])
 
-    const loadFixedBalances = () => fetch(`http://localhost:8080/account/${accountName}/fixedbalance`)
+    const loadFixedBalances = () => fetch(`http://localhost:8080/api/account/${accountName}/fixedbalance`)
         .then(response => response.ok && response.json())
         .then(json => setFixedBalances(json.balances))
 
     const saveFixedBalance = () => {
-        fetch(`http://localhost:8080/account/${accountName}/fixedbalance`, {
+        fetch(`http://localhost:8080/api/account/${accountName}/fixedbalance`, {
             method: 'POST',
             headers: {'Content-Type': 'application/json'},
             body: JSON.stringify({

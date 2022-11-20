@@ -49,7 +49,7 @@ export const Reports = props => {
     }, [])
 
     const loadData = () => {
-        var url = 'http://localhost:8080/years'
+        var url = 'http://localhost:8080/api/years'
         return fetch(url)
             .then(response => response.json())
             .then(json => setYears(json.years))

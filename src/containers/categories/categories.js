@@ -10,11 +10,11 @@ export const Categories = props => {
         loadCategories()
     }, [])
 
-    const loadCategories = () => fetch(`http://localhost:8080/category`)
+    const loadCategories = () => fetch(`http://localhost:8080/api/category`)
         .then(response => response.json())
         .then(json => dispatchCat({type: 'load', categories: json.categories}))
 
-    const saveCategories = () => fetch(`http://localhost:8080/category`, {
+    const saveCategories = () => fetch(`http://localhost:8080/api/category`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(categories)})

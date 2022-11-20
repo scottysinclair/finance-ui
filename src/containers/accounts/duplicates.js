@@ -9,7 +9,7 @@ export const Duplicates = styled( ({className, feedId})  => {
 
     console.log(feedId)
 
-    const duplicateCheck = (feedId) => fetch(`http://localhost:8080/duplicateCheck/${feedId}`, { method: 'GET' })
+    const duplicateCheck = (feedId) => fetch(`http://localhost:8080/api/duplicateCheck/${feedId}`, { method: 'GET' })
         .then(response => response.status === 200 && response.json())
         .then(json => {
             if (json) {
@@ -18,7 +18,7 @@ export const Duplicates = styled( ({className, feedId})  => {
             }
         })
 
-    const saveDuplicates = () => fetch(`http://localhost:8080/duplicates/${dupsForFeed}`, {
+    const saveDuplicates = () => fetch(`http://localhost:8080/api/duplicates/${dupsForFeed}`, {
         method: 'POST',
         headers: {'Content-Type': 'application/json'},
         body: JSON.stringify(dups)})

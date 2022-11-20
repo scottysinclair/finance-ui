@@ -22,11 +22,11 @@ export const Feeds = props => {
         loadFeeds()
     }, [])
 
-    const loadFeeds = () => fetch(`http://localhost:8080/account/${accountName}/feed`)
+    const loadFeeds = () => fetch(`http://localhost:8080/api/account/${accountName}/feed`)
         .then(response => response.ok && response.json())
         .then(json => setFeeds(json.feeds))
 
-    const deleteImport = (feedId) => fetch(`http://localhost:8080/feed/${feedId}`, { method: 'DELETE' })
+    const deleteImport = (feedId) => fetch(`http://localhost:8080/api/feed/${feedId}`, { method: 'DELETE' })
         .then(response => response.ok && loadFeeds() && setActiveFeed(null))
 
     const upload = (uploadFile) => {
@@ -34,7 +34,7 @@ export const Feeds = props => {
         if (uploadFile) {
             const formData = new FormData()
             formData.append('file',uploadFile)
-            fetch(`http://localhost:8080/account/${accountName}/feed`, {
+            fetch(`http://localhost:8080/api/account/${accountName}/feed`, {
                 method: 'POST',
                 body: formData
             }).then(response => response.json())

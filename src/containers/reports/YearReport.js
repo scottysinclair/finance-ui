@@ -1,7 +1,7 @@
 import React, {useEffect, useState} from "react";
 
 import {useParams} from "react-router-dom";
-import {CategoryBarchart} from "../dataentry/CategoryBarchart";
+import {CategoryBarchart} from "../monthlyreport/CategoryBarchart";
 
 export const YearReport = props =>  {
 
@@ -9,7 +9,7 @@ export const YearReport = props =>  {
     const [categories, setCategories] = useState(null)
 
     useEffect(() => {
-        fetch(`http://localhost:8080/year/${year}/categories`)
+        fetch(`http://localhost:8080/api/year/${year}/categories`)
             .then(response => response.json())
             .then(json => setCategories(json.data))
     }, [year])
