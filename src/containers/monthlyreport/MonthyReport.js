@@ -136,8 +136,16 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
             e.stopPropagation()
         }
         if (e.key === 'Escape') {
-            setShowHelp(false)
-            setShowChart(false)
+            if (showHelp) {
+                setShowHelp(false)
+                e.preventDefault()
+                e.stopPropagation()
+            }
+            else if (showChart && !filter) {
+                setShowChart(false)
+                e.preventDefault()
+                e.stopPropagation()
+            }
         }
         if (e.key === 'End') {
             setNextMonth()
@@ -152,9 +160,9 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
     }
 
     useEffect(() => {
-        window.addEventListener("keydown", onKeyDown)
+        window.addEventListener("keydown", onKeyDown, true)
         return function cleanup() {
-            window.removeEventListener("keydown", onKeyDown)
+            window.removeEventListener("keydown", onKeyDown, true)
         }
     })
 
