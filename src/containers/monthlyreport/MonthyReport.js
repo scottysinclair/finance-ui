@@ -20,8 +20,8 @@ const HelpContainer = styled.aside`
   position: fixed;
   padding: 1em;
   background: white;
-  height: 22em;
-  width: 30em;
+  height: 27em;
+  width: 40em;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -37,6 +37,11 @@ const HelpContainer = styled.aside`
 
     li {
       padding: 1rem 2rem 1rem 2rem;
+    }
+  }
+  ol.sublist {
+    li {
+      padding: 0.5rem 1rem 0.5rem 1rem;
     }
   }
 `;
@@ -80,13 +85,23 @@ const toMonthName = month => {
     if (month === 12) return 'December'
 }
 
-const dataEntryKeys = new RegExp("^[a-zA-Z0-9! \b,.-]$");
+const dataEntryKeys = new RegExp("^[a-zA-Z0-9!>< \b,.-]$");
 
 const passesFilter = (t, filter) => {
     if (!filter || filter.length == 0) return true;
-    for (var key in t) {
-        if (t[key] && t[key].toString().toLowerCase().includes(filter.toLowerCase())) {
-            return true;
+    if (filter.startsWith(">")) {
+        const number = parseInt( filter.substring(1) )
+        return t.amount > number;
+    }
+    else if (filter.startsWith("<")) {
+        const number = parseInt( filter.substring(1) )
+        return t.amount < number;
+    }
+    else {
+        for (var key in t) {
+            if (t[key] && t[key].toString().toLowerCase().includes(filter.toLowerCase())) {
+                return true;
+            }
         }
     }
     return false;
@@ -201,7 +216,7 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
                     total: newTotal,
                     count: trans.length
                 }
-            }).sort((a, b) => a.total - b.total))
+            }))
         }
     }, [filteredTransactions, changeCategoryFor])
 
@@ -212,27 +227,8 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
         }
     }, [filteredTransactions])
 
-    const updateFilter = (key) => {
+    const updateFilter = (e) => {
         //console.log("update filter", filter, key)
-        onKeyDownForFilter({key: key})
-    }
-
-    const addTransaction = i => {
-        const t = [...transactions]
-        t.splice(i, 0, {
-            id: null,
-            uuid: uuidv4(),
-            account: 'Bank Austria',
-            day: null,
-            month: currentMonth.month,
-            year: currentMonth.year,
-            category: null,
-            amount: null
-        })
-        setTransactions(t)
-    }
-
-    const onKeyDownForFilter = e => {
         if (e.key === 'Escape') {
             setFilter(null)
             return
@@ -252,6 +248,21 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
                 setFilter(e.key)
             }
         }
+    }
+
+    const addTransaction = i => {
+        const t = [...transactions]
+        t.splice(i, 0, {
+            id: null,
+            uuid: uuidv4(),
+            account: 'Bank Austria',
+            day: null,
+            month: currentMonth.month,
+            year: currentMonth.year,
+            category: null,
+            amount: null
+        })
+        setTransactions(t)
     }
 
     const setNextMonth = () => {
@@ -306,7 +317,7 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
             <label>Filtered <input ref={filterRef}
                                   readOnly={true}
                                   value={filter || ''}
-                                  onKeyDown={onKeyDownForFilter}/>
+                                 onKeyDown={updateFilter}/>
             </label>
         </header>
     }
@@ -318,7 +329,12 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
                     <h2>HELP</h2>
                     <ol>
                         <li><b>Navigation:</b> ←, ↑, →, ↓, PageUp,PageDown</li>
-                        <li><b>Filter Table data:</b> type when a table cell is highlighted</li>
+                        <li><b>Filter Table data:</b> type when a table cell is highlighted
+                            <ol className={'sublist'}>
+                                <li><b>&gt;</b>&nbsp;&nbsp;filter on transactions with an amount higher than</li>
+                                <li><b>&lt;</b>&nbsp;&nbsp;filter on transactions with an amount less than</li>
+                            </ol>
+                        </li>
                         <li><b>Prev/Next month:</b> Home/End</li>
                         <li><b>Sort Column:</b> CTRL + S</li>
                         <li><b>Toggle Graph:</b> CTRL + G</li>

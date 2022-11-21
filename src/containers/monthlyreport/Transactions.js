@@ -119,7 +119,7 @@ export const Transactions = styled(({
                 }
             }
             if (e.key === 'Escape') {
-                if (filter) updateFilter(null)
+                if (filter) updateFilter(e)
                 else if (isActive(t, field)) setActiveCell(null)
             }
             if (!isActive(t, field)) onKeyDownForFilter(field)(e)
@@ -127,7 +127,7 @@ export const Transactions = styled(({
     }
 
     const onKeyDownForFilter = () => e => {
-        updateFilter(e.key)
+        updateFilter(e)
     }
 
     const isActive = (t, field) => {
@@ -170,7 +170,7 @@ export const Transactions = styled(({
                     {transactions
                         .map((t, i) => (<tr key={t.uuid}>
                             <td key='day'>
-                                {inputCell(t, 'day', dateRefs, i, t.day + '/' + (t.month + 1), {rightRefs: descriptionRefs}, {maxLength: 2})}
+                                {inputCell(t, 'day', dateRefs, i, t.day, {rightRefs: descriptionRefs}, {maxLength: 2})}
                             </td>
                             <td key='content'>
                                 {inputCell(t, 'description', descriptionRefs, i, t.description, {
