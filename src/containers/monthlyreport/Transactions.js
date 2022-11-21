@@ -19,6 +19,7 @@ export const Transactions = styled(({
                                         className,
                                         filter,
                                         updateFilter,
+                                        updateSort,
                                         transactions,
                                         changeCategoryFor,
                                         setChangeCategoryFor,
@@ -77,10 +78,22 @@ export const Transactions = styled(({
     }, [activeCell])
 
     const focusField = (field, i) => {
-        if (field === 'day' && dateRefs[i] && dateRefs[i].current) dateRefs[i].current.focus()
-        if (field === 'description' && descriptionRefs[i] && descriptionRefs[i].current) descriptionRefs[i].current.focus()
-        if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) categoryRefs[i].current.focus();
-        if (field === 'amount' && amountRefs[i] && amountRefs[i].current) amountRefs[i].current.focus()
+        if (field === 'day' && dateRefs[i] && dateRefs[i].current) {
+            dateRefs[i].current.setSelectionRange(0, 0);
+            dateRefs[i].current.focus()
+        }
+        if (field === 'description' && descriptionRefs[i] && descriptionRefs[i].current) {
+            descriptionRefs[i].current.setSelectionRange(0, 0);
+            descriptionRefs[i].current.focus()
+        }
+        if (field === 'category' && categoryRefs[i] && categoryRefs[i].current) {
+            categoryRefs[i].current.setSelectionRange(0, 0);
+            categoryRefs[i].current.focus();
+        }
+        if (field === 'amount' && amountRefs[i] && amountRefs[i].current) {
+            amountRefs[i].current.setSelectionRange(0, 0);
+            amountRefs[i].current.focus()
+        }
     }
 
 
@@ -88,7 +101,14 @@ export const Transactions = styled(({
 
     const onKeyDown = (t, field, refArray, i, leftRefArray, rightRefArray) => {
         return e => {
-            if (e.ctrlKey) return;
+            if (e.ctrlKey && e.key === "s") {
+                e.stopPropagation()
+                e.preventDefault()
+                updateSort(field)
+            }
+            if (e.ctrlKey) {
+                return;
+            }
             if (e.key === 'Home' || e.key === 'End')
                 if (isActive(t, field)) e.stopPropagation()
                 else e.preventDefault()
@@ -97,7 +117,7 @@ export const Transactions = styled(({
                 focusRef1d(refArray, i - 1, {behavior: 'auto', block: 'center', inline: 'center'})
                 e.preventDefault()
             }
-            if (e.key === 'PageUp' && !isActive(t, field)) {
+            if (e.key === 'PageUp' && i > 0) {
                 focusRef1d(refArray, i - 10 > 0 ? i - 10 : 0)
                 e.preventDefault()
             }
@@ -105,14 +125,18 @@ export const Transactions = styled(({
                 focusRef1d(refArray, i + 1, {alignToTop: false})
                 e.preventDefault()
             }
-            if (e.key === 'PageDown' && !isActive(t, field)) {
+            if (e.key === 'PageDown' && i < refArray.length - 1) {
                 focusRef1d(refArray, i + 10 < refArray.length ? i + 10 : refArray.length - 1)
                 e.preventDefault()
             }
-            if (e.key === 'ArrowLeft' && !isActive(t, field))
+            if (e.key === 'ArrowLeft' && !isActive(t, field)) {
                 focusRef1d(leftRefArray, i)
-            if (e.key === 'ArrowRight' && !isActive(t, field))
+                e.preventDefault()
+            }
+            if (e.key === 'ArrowRight' && !isActive(t, field)) {
                 focusRef1d(rightRefArray, i)
+                e.preventDefault()
+            }
             if (e.key === 'Enter') {
                 if (field === 'category' && !changeCategoryFor) {
                     setChangeCategoryFor(t.uuid)

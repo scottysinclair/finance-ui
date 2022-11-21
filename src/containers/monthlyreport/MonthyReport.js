@@ -20,7 +20,7 @@ const HelpContainer = styled.aside`
   position: fixed;
   padding: 1em;
   background: white;
-  height: 27em;
+  height: 25em;
   width: 40em;
   top: 50%;
   left: 50%;
@@ -122,6 +122,7 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
     const [showChart, setShowChart] = useState(false)
     const [showHelp, setShowHelp] = useState(false)
     const [filter, setFilter] = useState("")
+    const [sort, setSort] = useState(null)
     const filterRef = useRef()
 
     const onKeyDown = e => {
@@ -258,6 +259,18 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
         }
     }
 
+    const updateSort = (field) => {
+        if (sort == null || sort.field !== field) {
+            setSort({field: field, up: true})
+        }
+        else if (sort.field === field && sort.up) {
+            setSort({field: field, up: false})
+        }
+        else {
+            setSort(null)
+        }
+    }
+
     const addTransaction = i => {
         const t = [...transactions]
         t.splice(i, 0, {
@@ -320,6 +333,48 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
         }
     }
 
+    const compareDescriptions = (a,b) => {
+        if (a.description > b.description) return 1
+        else if (a.description === b.description) return 0
+        else return -1
+    }
+    const compareCategories = (a,b) => {
+        if (a.category > b.category) return 1
+        else if (a.category === b.category) return 0
+        else return -1
+    }
+    const sortTransactions = (transactions) => {
+        if (sort == null) {
+            return transactions;
+        }
+        else if (sort.field === "amount") {
+            return [...transactions].sort((a, b) => sort.up ? a.amount - b.amount : b.amount - a.amount)
+        }
+        else if (sort.field === "description") {
+            return [...transactions].sort((a, b) => {
+                if (sort.up) {
+                    return compareDescriptions(a,b)
+                }
+                else {
+                    return compareDescriptions(a,b) * -1
+                }
+            })
+        }
+        else if (sort.field === "category") {
+            return [...transactions].sort((a, b) => {
+                if (sort.up) {
+                    return compareCategories(a,b)
+                }
+                else {
+                    return compareCategories(a,b) * -1
+                }
+            })
+        }
+        else {
+            return transactions;
+        }
+    }
+
     const renderFilter = () => {
         return <header className='filter'>
             <label>Filtered <input ref={filterRef}
@@ -327,6 +382,16 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
                                   value={filter || ''}
                                  onKeyDown={updateFilter}/>
             </label>
+        </header>
+    }
+
+    const renderSort = () => {
+        const sortDirection = () => {
+            if (sort.up) return "ascending"
+            else return "descending"
+        }
+        return sort && <header className='sort'>
+            <span>Sorted by {sort && sort.field}  {sortDirection()}</span>
         </header>
     }
 
@@ -343,8 +408,8 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
                                 <li><b>&lt;</b>&nbsp;&nbsp;filter on transactions with an amount less than</li>
                             </ol>
                         </li>
+                        <li><b>Sort Table data:</b> CTRL + S to sort with the highlighted table cell</li>
                         <li><b>Prev/Next month:</b> Home/End</li>
-                        <li><b>Sort Column:</b> CTRL + S</li>
                         <li><b>Toggle Graph:</b> CTRL + G</li>
                     </ol>
                 </HelpContainer>}
@@ -355,11 +420,13 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
             </>) : (
                 <>
                     {(filter != null && filter.length > 0) && renderFilter()}
+                    {renderSort()}
                     <ContentDiv>
                         <Transactions {...{
                             filter,
                             updateFilter,
-                            transactions: filteredTransactions,
+                            updateSort,
+                            transactions: sortTransactions(filteredTransactions),
                             changeCategoryFor, setChangeCategoryFor,
                             updateTransaction,
                             addTransaction,
@@ -387,7 +454,6 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
   header.filter {
     position: absolute;
     display: inline-block;
-
     input {
       font-size: 1em;
       border: 1px solid black;
@@ -395,7 +461,18 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
       padding-left: 5px;
       padding-bottom: 5px;
     }
+    background: #ffffff;
+    z-index: 2;
+  }
 
+  header.sort {
+    position: absolute;
+    display: inline-block;
+    left: 30em ;
+    font-size: 1em;
+    padding-top: 5px;
+    padding-left: 5px;
+    padding-bottom: 5px;
     background: #ffffff;
     z-index: 2;
   }
