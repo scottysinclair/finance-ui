@@ -86,6 +86,9 @@ function App() {
                         <Route exact={false} key="route-3" path='/accounts'>
                             <Accounts/>
                         </Route>
+                        <Route exact={false} key="route-3" path='/duplicates'>
+                            <Accounts/>
+                        </Route>
                         <Route exact={false} key="route-3" path='/categories'>
                             <Categories/>
                         </Route>

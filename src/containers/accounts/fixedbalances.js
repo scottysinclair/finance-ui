@@ -10,6 +10,7 @@ export const FixedBalances = props => {
     const [amountInput, setAmountInput] = useState(null)
 
     useEffect(() => {
+        document.title = `${accountName} Fixed Balances` ;
         loadFixedBalances()
     }, [])
 

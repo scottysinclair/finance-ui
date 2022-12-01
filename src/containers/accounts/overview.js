@@ -6,6 +6,7 @@ export const Overview = props => {
     const [overview, setOverview] = useState(null)
 
     useEffect(() => {
+        document.title = accountName;
         fetch(`http://localhost:8080/api/account/${accountName}/overview`)
             .then(response => response.ok && response.json())
             .then(json => setOverview(json))

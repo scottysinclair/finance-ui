@@ -20,7 +20,7 @@ const HelpContainer = styled.aside`
   position: fixed;
   padding: 1em;
   background: white;
-  height: 25em;
+  height: 35em;
   width: 40em;
   top: 50%;
   left: 50%;
@@ -149,12 +149,22 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
             }
         }
         if (e.key === 'End') {
-            setNextMonth()
+            if (e.getModifierState('Shift')) {
+                setNextYear()
+            }
+            else {
+                setNextMonth()
+            }
             e.preventDefault()
             e.stopPropagation()
         }
         if (e.key === 'Home') {
-            setPrevMonth()
+            if (e.getModifierState('Shift')) {
+                setPrevYear()
+            }
+            else {
+                setPrevMonth()
+            }
             e.preventDefault()
             e.stopPropagation()
         }
@@ -206,6 +216,7 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
 
 
     useEffect(() => {
+        document.title = `${toMonthName(currentMonth.month)} ${currentMonth.year}`;
         onChangeHeaderInfo(<>
             <span>{toMonthName(currentMonth.month)} {currentMonth.year}</span>
         </>)
@@ -301,6 +312,18 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
         history.push(`/transactions/${result.year}/${result.month}`)
     }
 
+    const setPrevYear = () => {
+        const result = {year: currentMonth.year - 1, month: currentMonth.month }
+        setCurrentMonth(result)
+        history.push(`/transactions/${result.year}/${result.month}`)
+    }
+
+    const setNextYear = () => {
+        const result = {year: currentMonth.year + 1, month: currentMonth.month }
+        setCurrentMonth(result)
+        history.push(`/transactions/${result.year}/${result.month}`)
+    }
+
     const categoryChanged = cat => {
         transactions.filter(t => t.uuid === changeCategoryFor).forEach(t => t.category = cat)
         setChangeCategoryFor(null)
@@ -387,11 +410,11 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
 
     const renderSort = () => {
         const sortDirection = () => {
-            if (sort.up) return "ascending"
-            else return "descending"
+            if (sort.up) return "🠉"
+            else return "🠋"
         }
         return sort && <header className='sort'>
-            <span>Sorted by {sort && sort.field}  {sortDirection()}</span>
+            <span>Sorted by <span class={'sort_column'}>{sort && sort.field}</span>  <span class={'sort_arrow'}>{sortDirection()}</span></span>
         </header>
     }
 
@@ -410,6 +433,7 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
                         </li>
                         <li><b>Sort Table data:</b> CTRL + S to sort with the highlighted table cell</li>
                         <li><b>Prev/Next month:</b> Home/End</li>
+                        <li><b>Prev/Next year:</b> Shift + Home/End</li>
                         <li><b>Toggle Graph:</b> CTRL + G</li>
                     </ol>
                 </HelpContainer>}
@@ -473,8 +497,10 @@ export const MonthyReport = styled(({className, onChangeHeaderInfo}) => {
     padding-top: 5px;
     padding-left: 5px;
     padding-bottom: 5px;
-    background: #ffffff;
     z-index: 2;
+    .sort_column {
+      text-transform: capitalize;
+    }
   }
 
   th {

@@ -5,6 +5,7 @@ import {NavLink, Route, Switch} from "react-router-dom";
 import {Overview} from "./overview";
 import {FixedBalances} from "./fixedbalances";
 import {Feeds} from "./feeds";
+import {Duplicates2} from "./duplicates2";
 
 const AccountsContainer = styled.div`
     display: flex;
@@ -45,6 +46,7 @@ export const Accounts = props => {
     const [accounts, setAccounts] = useState([])
 
     useEffect(() =>{
+        document.title = 'Accounts';
         loadData()
     }, [])
 
@@ -66,6 +68,7 @@ export const Accounts = props => {
                             <li><NavLink activeClassName='navActive' to={`/accounts/${a.name}/fixedbalances`}>FixedBalances</NavLink></li>
                         </ol>
                     </li>) }
+                    { accounts.length > 0 && <li><NavLink activeClassName='navActive' to={`/duplicates`}>Find Duplicates</NavLink></li> }
                 </ol>
             </AccountsNav>
             <AccountsContent>
@@ -78,6 +81,9 @@ export const Accounts = props => {
                     </Route>
                     <Route key='route-3' path='/accounts/:accountName'>
                         <Overview/>
+                    </Route>
+                    <Route key='route-3' path='/duplicates'>
+                        <Duplicates2/>
                     </Route>
                 </Switch>
             </AccountsContent>

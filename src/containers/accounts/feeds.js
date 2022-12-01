@@ -19,6 +19,7 @@ export const Feeds = props => {
     const [activeFeed, setActiveFeed] = useState(null)
 
     useEffect(() => {
+        document.title = `${accountName} Feeds` ;
         loadFeeds()
     }, [])
 
@@ -72,6 +73,54 @@ export const Feeds = props => {
                 </dl>
             </div>
             <button name='delete' onClick={ _ => deleteImport(activeFeed.feedId)}>Delete</button>
-            <Duplicates feedId={activeFeed.feedId}/></>)}
+            <hr/>
+            { /* <FeedTransactions feedId={activeFeed.feedId}/> */ }
+            <Duplicates feedId={activeFeed.feedId}/>
+        </>)}
     </div>)
 }
+
+
+
+export const FeedTransactions = styled(({className, feedId}) => {
+    const [transactions, setTransactions] = useState([])
+
+    const loadFeedTransactions = () => fetch(`http://localhost:8080/api/feed/${feedId}`)
+        .then(response => response.ok && response.json())
+        .then(json => json.transactions && setTransactions(json.transactions))
+
+    const pad = (number) => {
+        if (`${number}`.length == 1) {
+            return `0${number}`
+        }
+        else return number
+    }
+
+    useEffect(() => {
+        loadFeedTransactions(feedId)
+    }, [])
+
+    return transactions.length > 0 && <section className={className}>
+        <table>
+            <tbody>
+            {
+                transactions.map(t => <tr>
+                    <td class={"day"}>{pad(t.day)}.{pad(t.month + 1)}.{t.year}</td>
+                    <td class={"description"}>{t.description.substring(0, Math.min(100, t.description.length))}</td>
+                    <td class={"amount"}>{t.amount}</td>
+                </tr>)
+            }
+            </tbody>
+        </table>
+    </section>
+})`
+  overflow-y: scroll;
+  max-height: 60vh;
+
+  td.day {
+    padding: 2px 100px;
+  }
+`;
+
+
+
