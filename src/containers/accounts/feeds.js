@@ -4,16 +4,7 @@ import {Duplicates} from "./duplicates";
 
 import styled from "styled-components";
 
-const StyledDt = styled.dt`
-    display: inline-block;
-`
-
-const StyledDd = styled.dd`
-    margin-left: 4pt;
-    display: inline-block;
-`
-
-export const Feeds = props => {
+export const Feeds = styled( ({className}) => {
     const { accountName } = useParams()
     const [feeds, setFeeds] = useState([])
     const [activeFeed, setActiveFeed] = useState(null)
@@ -30,60 +21,78 @@ export const Feeds = props => {
     const deleteImport = (feedId) => fetch(`http://localhost:8080/api/feed/${feedId}`, { method: 'DELETE' })
         .then(response => response.ok && loadFeeds() && setActiveFeed(null))
 
-    const upload = (uploadFile) => {
-        console.log(uploadFile)
+    const upload = (uploadFiles) => {
+        const files = Array.from(uploadFiles).sort((a, b) => { return a.lastModified - b.lastModified })
+        uploadNext(files, 0)
+    }
+
+    const uploadNext = (uploadFiles, i) => {
+        if (i >= uploadFiles.length) return;
+        const uploadFile = uploadFiles[i]
+        console.log('Uploading ', uploadFile)
         if (uploadFile) {
             const formData = new FormData()
             formData.append('file',uploadFile)
+            formData.append('timestamp', uploadFile.lastModified)
             fetch(`http://localhost:8080/api/account/${accountName}/feed`, {
                 method: 'POST',
                 body: formData
             }).then(response => response.json())
                 .then(response => {
-                    if (!response.error) {
-                        loadFeeds();
+                    if (!response.error && i + 1 < uploadFiles.length) {
+                            uploadNext(uploadFiles, i + 1)
+                    }
+                    else {
+                        loadFeeds()
                     }
                 })
         }
+
     }
 
-    return (<div>
+    return (<div className={className}>
         <h2>Feeds</h2>
-        <input type='file' name='upload' onChange={ e => upload(e.target.files[0])}/>
+        <p>Upload files: <input type='file' name='upload' multiple={true} onChange={ e => upload(e.target.files)}/></p>
+        <hr/>
         <table width="100%">
+            <thead>
+                <th></th>
+                <th>File</th>
+                <th># Transactions</th>
+                <th>Date Start</th>
+                <th>Date End</th>
+                <th>File Date</th>
+            </thead>
             <tbody>
             { feeds.map((f, i) => <tr key={`f0-${i}`}>
-                 <td key={`f1-${i}`}><input id={`f1-${i}`} type='radio' name='feed' onChange={_ => setActiveFeed(f)} checked={f === activeFeed}/></td>
-                 <td key={`f2-${i}`}><label htmlFor={`f1-${i}`}> {f.file}</label></td>
-                 <td key={`f3-${i}`}>{new Date(f.dateImported).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })} {new Date(f.dateImported).toLocaleTimeString()}</td>
+                 <td key={'1'}><input id={`f1-${i}`} type='radio' name='feed' onChange={_ => setActiveFeed(f)} checked={f === activeFeed}/></td>
+                 <td key={'2'}><label htmlFor={`f1-${i}`}> {f.file}</label></td>
+                 <td key={'3'}>{f.numberOfTransactions}</td>
+                 <td key={'4'}>{new Date(f.dateImported).toLocaleDateString('en-uk', { year: 'numeric', month: 'numeric', day: 'numeric' })} {new Date(f.dateImported).toLocaleTimeString()}</td>
+                 <td key={'5'}>{new Date(f.fromDate).toLocaleDateString('en-uk', { year: 'numeric', month: 'numeric', day: 'numeric' })}</td>
+                 <td key={'6'}>{new Date(f.toDate).toLocaleDateString('en-uk', { year: 'numeric', month: 'numeric', day: 'numeric' })}</td>
              </tr>)}
             </tbody>
         </table>
         { activeFeed && (<>
-            <div key='overview'>
-                <dl>
-                    <StyledDt>From:</StyledDt>
-                    <StyledDd>{new Date(activeFeed.fromDate).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })}</StyledDd>
-                </dl>
-                    <StyledDt>To:</StyledDt>
-                    <StyledDd>{new Date(activeFeed.toDate).toLocaleDateString('en', { year: 'numeric', month: 'long', day: 'numeric' })}</StyledDd>
-                <dl>
-                    <StyledDt>Transactions:</StyledDt>
-                    <StyledDd>{activeFeed.numberOfTransactions}</StyledDd>
-                </dl>
-            </div>
             <button name='delete' onClick={ _ => deleteImport(activeFeed.feedId)}>Delete</button>
             <hr/>
-            { /* <FeedTransactions feedId={activeFeed.feedId}/> */ }
-            <Duplicates feedId={activeFeed.feedId}/>
+            <FeedTransactions feedId={activeFeed.feedId}/>
         </>)}
     </div>)
-}
+})`
+    th {
+      text-align: left;
+    }
+    table {
+       margin-bottom: 1rem;
+    }
+`
 
 
 
 export const FeedTransactions = styled(({className, feedId}) => {
-    const [transactions, setTransactions] = useState([])
+    const [transactions, setTransactions] = useState(null)
 
     const loadFeedTransactions = () => fetch(`http://localhost:8080/api/feed/${feedId}`)
         .then(response => response.ok && response.json())
@@ -97,10 +106,12 @@ export const FeedTransactions = styled(({className, feedId}) => {
     }
 
     useEffect(() => {
+        setTransactions(null)
         loadFeedTransactions(feedId)
-    }, [])
+    }, [feedId])
 
-    return transactions.length > 0 && <section className={className}>
+    return <>
+        { transactions && transactions.length > 0 && <section className={className}>
         <table>
             <tbody>
             {
@@ -112,15 +123,21 @@ export const FeedTransactions = styled(({className, feedId}) => {
             }
             </tbody>
         </table>
-    </section>
-})`
+        </section> || <p>Loading...</p>
+        }
+    </>})`
   overflow-y: scroll;
   max-height: 60vh;
-
+  
+  td {
+    font-family: monospace;
+    font-size: larger;
+  }
+  
   td.day {
-    padding: 2px 100px;
+    padding-right: 2rem;
+  }
+  td.amount {
+    padding-left: 2rem;
   }
 `;
-
-
-

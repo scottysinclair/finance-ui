@@ -7,6 +7,7 @@ export const Categories = props => {
 
 
     useEffect(() => {
+        document.title = 'Categories'
         loadCategories()
     }, [])
 
